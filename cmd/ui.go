@@ -2,19 +2,14 @@ package main
 
 import (
 	"fmt"
-	"image/color"
-	//	"log"
-	//	"runtime/debug"
-	//	"strconv"
-	// 	"time"
 	"fyne.io/fyne/v2"
 	ap "fyne.io/fyne/v2/app"
-	//	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"image/color"
+	"log"
 )
 
 type buttonWrap struct {
@@ -26,10 +21,12 @@ type buttonWrap struct {
 }
 
 type textWrap struct {
-	txt    string
-	txtClr color.Color
-	txtBld bool
-	bgClr  color.Color
+	txt     string
+	txtClr  color.Color
+	txtSize float32
+	txtBld  bool
+	bgClr   color.Color
+	bind    binding.String
 }
 
 type labelWrap struct {
@@ -79,7 +76,13 @@ func (app *application) screen() {
 
 func (app *application) setupPage(w fyne.Window) fyne.CanvasObject {
 
-	t := &textWrap{txt: TITLE_SETUP, txtClr: white, txtBld: true, bgClr: purple}
+	t := &textWrap{
+		txt:     TITLE_SETUP,
+		txtClr:  white,
+		txtSize: SIZE_PAGE_TITLE,
+		txtBld:  true,
+		bgClr:   purple,
+	}
 	row0 := t.makeText()
 
 	t = &textWrap{txt: TEXT_CURR_GRID, txtClr: black, txtBld: false, bgClr: white}
@@ -89,12 +92,18 @@ func (app *application) setupPage(w fyne.Window) fyne.CanvasObject {
 	lonLabel := t.makeText()
 
 	row1 := container.New(layout.NewGridLayout(2), latLabel, lonLabel)
+	l := &labelWrap{
+		txtClr: black,
+		txtBld: false,
+		bgClr:  white,
+	}
+	l.txt = fmt.Sprintf("%s%s", TEXT_GRID_VALUE, app.grid)
+	l.bind = app.gridBind
+	currGrid := l.makeLabel()
 
-	t.txt = TEXT_GRID_VALUE + app.grid
-	currGrid := t.makeText()
+	//	t.txt = TEXT_GRID_VALUE + app.grid
+	//	currGrid := t.makeText()
 
-	//    lattitude := widget.NewEntry()
-	//	lattitude.SetPlaceHolder(ENTER_LATTITUDE)
 	newGrid := widget.NewEntry()
 	newGrid.SetPlaceHolder(ENTER_GRID)
 	row2 := container.New(layout.NewGridLayout(2), currGrid, newGrid)
@@ -109,8 +118,8 @@ func (app *application) setupPage(w fyne.Window) fyne.CanvasObject {
 		},
 	}
 	enterSetUp := b.makeButton()
-
 	row3 := container.New(layout.NewGridLayout(1), enterSetUp)
+
 	row35 := seperator()
 
 	t.txt = TEXT_PARK_AZIMUTH
@@ -119,6 +128,19 @@ func (app *application) setupPage(w fyne.Window) fyne.CanvasObject {
 	parkElLabel := t.makeText()
 
 	row4 := container.New(layout.NewGridLayout(2), parkAzLabel, parkElLabel)
+
+	l = &labelWrap{
+		txtClr: black,
+		txtBld: false,
+		bgClr:  white,
+	}
+	l.txt = fmt.Sprintf("%s%5.2f", TEXT_CURRENT_VALUE, app.parkAz)
+	l.bind = app.parkAzBind
+	currParkAz := l.makeLabel()
+	l.txt = fmt.Sprintf("%s%5.2f", TEXT_CURRENT_VALUE, app.parkEl)
+	l.bind = app.parkElBind
+	currParkEl := l.makeLabel()
+	row45 := container.New(layout.NewGridLayout(2), currParkAz, currParkEl)
 
 	parkAz := widget.NewEntry()
 	parkAz.SetPlaceHolder(ENTER_PARK_AZIMUTH)
@@ -146,6 +168,20 @@ func (app *application) setupPage(w fyne.Window) fyne.CanvasObject {
 
 	row7 := container.New(layout.NewGridLayout(4), maxAzLabel, minAzLabel, maxElLabel, minElLabel)
 
+	l.txt = fmt.Sprintf("%s%5.2f", TEXT_CURRENT_VALUE, app.maxAz)
+	l.bind = app.maxAzBind
+	currMaxAz := l.makeLabel()
+	l.txt = fmt.Sprintf("%s%5.2f", TEXT_CURRENT_VALUE, app.minAz)
+	l.bind = app.minAzBind
+	currMinAz := l.makeLabel()
+	l.txt = fmt.Sprintf("%s%5.2f", TEXT_CURRENT_VALUE, app.maxEl)
+	l.bind = app.maxElBind
+	currMaxEl := l.makeLabel()
+	l.txt = fmt.Sprintf("%s%5.2f", TEXT_CURRENT_VALUE, app.minEl)
+	l.bind = app.minElBind
+	currMinEl := l.makeLabel()
+	row75 := container.New(layout.NewGridLayout(4), currMaxAz, currMinAz, currMaxEl, currMinEl)
+
 	maxAz := widget.NewEntry()
 	maxAz.SetPlaceHolder(ENTER_MAX_AZ)
 	minAz := widget.NewEntry()
@@ -168,35 +204,71 @@ func (app *application) setupPage(w fyne.Window) fyne.CanvasObject {
 
 	rowN := app.basePage(w)
 	setupGrid := container.NewBorder(nil, rowN, nil, nil, container.New(layout.NewVBoxLayout(),
-		row0, row1, row2, row3, row35, row4, row5, row6, row65, row7, row8, row9, row95))
+		row0, row1, row2, row3, row35, row4, row45, row5, row6, row65, row7, row75, row8, row9,
+		row95))
 	return setupGrid
 
 }
 
 func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 
-	t := &textWrap{txt: TITLE_OPERATE, txtClr: white, txtBld: true, bgClr: purple}
+	t := &textWrap{
+		txt:     TITLE_OPERATE,
+		txtClr:  white,
+		txtSize: SIZE_PAGE_TITLE,
+		txtBld:  true,
+		bgClr:   purple,
+	}
 	row0 := t.makeText()
 
 	sunMoon := widget.NewRadioGroup([]string{MOON, SUN}, func(value string) {
 		app.trackModeSelect(value)
 	})
 	sunMoon1 := container.New(layout.NewCenterLayout(), sunMoon)
-
-	park := widget.NewButtonWithIcon(BUTTON_PARK, theme.HomeIcon(), func() {
-		app.parkDish()
+	parkSign, err := fyne.LoadResourceFromPath("./assets/park2.jpg")
+	if err != nil {
+		log.Fatalf("Failed to load park sign: %v", err)
+	}
+	park := widget.NewButtonWithIcon(BUTTON_PARK, parkSign, func() {
+		app.pushedPark()
 	})
-	track := widget.NewButtonWithIcon(BUTTON_TRACK, theme.HomeIcon(), func() {
+	trackSign, err := fyne.LoadResourceFromPath("./assets/track2.jpg")
+	if err != nil {
+		log.Fatalf("Failed to load track sign: %v", err)
+	}
+	track := widget.NewButtonWithIcon(BUTTON_TRACK, trackSign, func() {
 		app.pushedTrack()
 	})
-	row1 := container.New(layout.NewGridLayout(3), sunMoon1, track, park)
+	redCircle, err := fyne.LoadResourceFromPath("./assets/red_circle.png")
+	if err != nil {
+		log.Fatalf("Failed to load red circle: %v", err)
+	}
+	stop := widget.NewButtonWithIcon(BUTTON_STOP, redCircle, func() {
+		app.pushedStop()
+	})
+
+	row1 := container.New(layout.NewGridLayout(4), sunMoon1, track, stop, park)
 
 	row15 := seperator()
-    
-	t.txt = TEXT_TRACKING + TEXT_MOON
-	t.bgClr = lightPurple
-	tracking := t.makeText()
-	row3 := container.New(layout.NewGridLayout(1), tracking)
+
+	l := &labelWrap{
+		txtClr: black,
+		txtBld: true,
+		bgClr:  white,
+	}
+	l.bind = app.modeBind
+	switch app.state {
+	case TRACKING_SUN:
+		l.txt = "Tracking the Sun"
+	case TRACKING_MOON:
+		l.txt = "Tracking the Moon"
+	case PARKED:
+		l.txt = "Parked"
+	case IDLE:
+		l.txt = "Idle"
+	}
+	opMode := l.makeLabel()
+	row3 := container.New(layout.NewGridLayout(1), opMode)
 
 	t = &textWrap{txt: TEXT_CURR_AZ, txtClr: black, txtBld: false, bgClr: white}
 	currAzLabel := t.makeText()
@@ -204,7 +276,7 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	currElLabel := t.makeText()
 	row4 := container.New(layout.NewGridLayout(2), currAzLabel, currElLabel)
 
-	l := &labelWrap{
+	l = &labelWrap{
 		txt:    fmt.Sprintf("%5.2f", app.currAz),
 		txtClr: black,
 		txtBld: false,
@@ -228,7 +300,13 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 
 func (app *application) pointPage(w fyne.Window) fyne.CanvasObject {
 
-	t := &textWrap{txt: TITLE_POINT, txtClr: white, txtBld: true, bgClr: purple}
+	t := &textWrap{
+		txt:     TITLE_POINT,
+		txtClr:  white,
+		txtSize: SIZE_PAGE_TITLE,
+		txtBld:  true,
+		bgClr:   purple,
+	}
 	row0 := t.makeText()
 
 	t = &textWrap{txt: TEXT_TARGET_AZ, txtClr: black, txtBld: false, bgClr: white}
@@ -313,7 +391,13 @@ func (app *application) pointPage(w fyne.Window) fyne.CanvasObject {
 
 func (app *application) manualPage(w fyne.Window) fyne.CanvasObject {
 
-	t := &textWrap{txt: TITLE_MANUAL, txtClr: white, txtBld: true, bgClr: purple}
+	t := &textWrap{
+		txt:     TITLE_MANUAL,
+		txtClr:  white,
+		txtSize: SIZE_PAGE_TITLE,
+		txtBld:  true,
+		bgClr:   purple,
+	}
 	row0 := t.makeText()
 
 	t = &textWrap{txt: TEXT_TARGET_AZ, txtClr: black, txtBld: false, bgClr: white}
@@ -342,6 +426,10 @@ func (app *application) manualPage(w fyne.Window) fyne.CanvasObject {
 
 	row3 := container.New(layout.NewGridLayout(1), enterTarget)
 	row35 := seperator()
+
+	t.txt = TEXT_ADJ_SIZE
+	adj := t.makeText()
+	row36 := container.New(layout.NewGridLayout(1), adj)
 
 	t.txt = TEXT_CURR_AZ
 	currAzLabel := t.makeText()
@@ -382,7 +470,7 @@ func (app *application) manualPage(w fyne.Window) fyne.CanvasObject {
 
 	rowN := app.basePage(w)
 	setupGrid := container.NewBorder(nil, rowN, nil, nil, container.New(layout.NewVBoxLayout(),
-		row0, row1, row2, row3, row35, row4, row5, row6, row65))
+		row0, row1, row2, row3, row35, row36, row4, row5, row6, row65))
 	return setupGrid
 }
 
@@ -426,7 +514,7 @@ func (app *application) basePage(w fyne.Window) fyne.CanvasObject {
 	manual := bMan.makeButton()
 
 	bPoint = &buttonWrap{
-		txt:    "Point",
+		txt:    "Calibrate",
 		txtClr: black,
 		txtBld: false,
 		bgClr:  pointColor(),

@@ -2,11 +2,8 @@ package main
 
 import (
 	"fmt"
-	//	"log"
 	"math"
-	//    "strconv"
 	"strings"
-	//	"time"
 	"unicode"
 	"unicode/utf8"
 )
@@ -22,51 +19,6 @@ import (
 //	lat, lon, err = otherGrid2Deg(x)
 //	if err != nil {
 //		log.Fatal(err)
-//	}
-//	fmt.Printf("%6.3f\t%6.3f\n", lat, lon)
-//
-//	localTime := time.Now()
-//	t := localTime.UTC()
-//	year := t.Year()
-//	//	m := t.Month()
-//	//	mIndex := monthIndex(string(m))
-//	//    if mIndex == -1 {
-//	//        log.Fatal("Failed to index: ", m)
-//	//    }
-//	month := 12
-//	day := t.Day()
-//	hour := float64(t.Hour())
-//	min := float64(t.Minute())
-//	sec := float64(t.Second())
-//	ut := hour + (min / 60.0) + (sec / 3600.0)
-//
-//	lattitude := lat //40.321490 //North
-//	longitude := lon //-74.51024 //West
-//	fmt.Println("Lat: ", lat, "Long: ", lon)
-//	fmt.Println("Year: ", year, "Month: ", month, "Day: ", day, "Hour: ", hour, "Minute: ", min)
-//
-//	_, _, _, _, _, _, az, el, dist := moon2(year, month, day, ut, longitude, lattitude)
-//
-//	fmt.Printf("Az: %5.2f\tEl: %5.2f\tDist: %5.2f\n", az, el, dist)
-//
-//}
-
-//void grid2deg(char *grid0,double *dlong,double *dlat);
-//
-//void moon2(int y,int m,int Day,
-//  double UT,
-//  double lon,double lat,
-//  double *RA,double *Dec,
-//  double *topRA,double *topDec,
-//  double *LST,double *HA,
-//  double *Az,double *El,double *dist);
-//
-//
-//#include <Arduino.h>
-//#include <math.h>
-
-//#include <string.h>
-//#include <ctype.h>
 
 // Translated from the WSJT Fortran code by Pete VE5VA
 // Traslated to Go by Saied Seghatoleslami AD2CC
@@ -222,54 +174,22 @@ func moon2(y, m, Day int, UT, lon, lat float64) (RA, Dec, topRA, topDec, LST, HA
 	var rho float64   //Earth radius factor
 	var GMST0 float64 //,LST,HA;
 	var g float64
-	//  double topRA,topDec                 ;//Topocentric coordinates of Moon
-	//  double Az,El;
-	//  double dist;
-
-	//  double rad = 57.2957795131,twopi = 6.283185307,pi,pio2;
-	//      data rad/57.2957795131d0/,twopi/6.283185307d0/
 
 	var rad float64 = 57.2957795131
 	var twopi float64 = 6.283185307
 	var pi, pio2 float64
-
-	//Note the use of 'L' to force 32-bit integer arithmetic here.
-	//  d=367L*y - 7L*(y+(m+9L)/12L)/4L + 275L*m/9L + Day - 730530L + UT/24.;
 
 	dint := int32(367)*int32(y) - int32(7)*(int32(y)+(int32(m)+int32(9))/int32(12))/int32(4) + int32(275)*int32(m)/int32(9) + int32(Day)
 	d = float64(dint) - 730530.0 + UT/24.0
 
 	ecl = 23.4393 - 3.563e-7*d
 
-	//Serial.print("d = ")
-	//Serial.println(d,3)
-
-	//  Orbital elements for Moon:
 	NN = 125.1228 - 0.0529538083*d
 	i = 5.1454
 	w = math.Mod(318.0634+0.1643573223*d+360000., 360.0)
 	a = 60.2666
 	e = 0.054900
 	MM = math.Mod(115.3654+13.0649929509*d+360000., 360.0)
-
-	// Orbital elements for Sun:
-	/*
-	  NN = 0.0
-	  i = 0.0
-	  w = math.Mod(282.9404 + 4.70935e-5 * d + 360000.,360.)
-	  a = 1.000000
-	  e = 0.016709 - 1.151e-9 * d
-	  MM = math.Mod(356.0470 + 0.99856002585 * d + 360000.,360.)
-	*/
-
-	/*
-	  Serial.print("\nmoon2: w=")
-	  Serial.print(w,3)
-	  Serial.print(" e=")
-	  Serial.print(e,3)
-	  Serial.print(" MM=")
-	  Serial.println(MM,3)
-	*/
 
 	EE = MM + e*rad*math.Sin(MM/rad)*(1.+e*math.Cos(MM/rad))
 	EE = EE - (EE-e*rad*math.Sin(EE/rad)-MM)/(1.-e*math.Cos(EE/rad))
@@ -294,7 +214,6 @@ func moon2(y, m, Day int, UT, lon, lat float64) (RA, Dec, topRA, topDec, LST, HA
 	//  Now include orbital perturbations:
 	Ms = math.Mod(356.0470+0.9856002585*d+3600000.0, 360.0)
 	ws = 282.9404 + 4.70935e-5*d
-	fmt.Printf("%f\t%f\n", Ms, ws)
 	Ls = math.Mod(Ms+ws+720.0, 360.0)
 	Lm = math.Mod(MM+w+NN+720., 360.)
 	DD = math.Mod(Lm-Ls+360.0, 360.0)

@@ -93,7 +93,7 @@ func (app *application) saveMasterData() error {
 	if err != nil {
 		return fmt.Errorf("Err marshaling master data: %v", err)
 	}
-    m = append(m, 0x00)
+	m = append(m, 0x00)
 
 	f, err := os.OpenFile(app.masterPath, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
@@ -118,7 +118,7 @@ func (app *application) saveDishData() error {
 	if err != nil {
 		return fmt.Errorf("Err marshaling dish data: %v", err)
 	}
-    m = append(m, 0x00)
+	m = append(m, 0x00)
 
 	f, err := os.OpenFile(app.dishPath, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {

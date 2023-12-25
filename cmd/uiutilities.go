@@ -1,21 +1,13 @@
 package main
 
 import (
-	//	"fmt"
+	"fyne.io/fyne/v2"
 	"image/color"
 	"log"
-	//	"runtime/debug"
-	//	"strconv"
-	//	"time"
-	"fyne.io/fyne/v2"
-	//	"strconv"
 
-	//	ap "fyne.io/fyne/v2/app"
-	//  "fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
-	//	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -28,6 +20,8 @@ const (
 	STATE_SETUP   = "setup"
 
 	TITLE_SETUP = "Set Up"
+
+	TEXT_CURRENT_VALUE = "Current Value: "
 
 	TEXT_CURR_GRID     = "Current Grid Square"
 	TEXT_NEW_GRID      = "Enter New Grid"
@@ -58,8 +52,11 @@ const (
 
 	BUTTON_TRACK  = "Track"
 	BUTTON_PARK   = "Park"
+	BUTTON_STOP   = "Stop"
 	TEXT_TRACKING = "Tracking: "
 	TEXT_MOON     = "The Moon"
+	TEXT_SUN      = "The Sun"
+	TEXT_IDLE     = "Not Tracking"
 	TEXT_CURR_AZ  = "Current Azimuth"
 	TEXT_CURR_EL  = "Current Elevation"
 
@@ -82,6 +79,8 @@ const (
 
 	TITLE_ERR = "ERROR"
 	BUTTON_OK = "OK"
+
+	SIZE_PAGE_TITLE = 18.0
 )
 
 func seperator() fyne.CanvasObject {
@@ -107,6 +106,16 @@ func (t *textWrap) makeText() *fyne.Container {
 	if t.txtBld {
 		txtArea.TextStyle.Bold = true
 	}
+	if t.txtSize == 0 {
+		t.txtSize = 14
+	}
+	if t.bind != nil {
+		err := t.bind.Set(t.txt)
+		if err != nil {
+			log.Fatalf("creating bound text failed: %v", err)
+		}
+	}
+	txtArea.TextSize = t.txtSize
 	con := container.New(layout.NewCenterLayout(), txtArea)
 	return container.New(layout.NewMaxLayout(), bg, con)
 }
@@ -119,6 +128,7 @@ func (l *labelWrap) makeLabel() *fyne.Container {
 		log.Fatalf("in creating bound label: %v", err)
 	}
 	label := widget.NewLabelWithData(l.bind)
+	label.TextStyle.Bold = l.txtBld
 	con := container.New(layout.NewCenterLayout(), label)
 	return container.New(layout.NewMaxLayout(), bg, con)
 }

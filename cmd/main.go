@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
-//	"time"
+	//	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/binding"
@@ -37,6 +37,14 @@ type application struct {
 	dishPath   string
 	azBind     binding.String
 	elBind     binding.String
+	gridBind   binding.String
+	parkAzBind binding.String
+	parkElBind binding.String
+	maxAzBind  binding.String
+	minAzBind  binding.String
+	maxElBind  binding.String
+	minElBind  binding.String
+	modeBind   binding.String
 }
 
 func main() {
@@ -56,67 +64,55 @@ func main() {
 		maxAz:      315.0,
 		minAz:      45.0,
 		maxEl:      90.0,
-		minEl:      28.0,
+		minEl:      0.0,
 		currAz:     125.0,
 		currEl:     30.0,
 		masterPath: masterPath,
 		dishPath:   dishPath,
 		azBind:     binding.NewString(),
 		elBind:     binding.NewString(),
+		gridBind:   binding.NewString(),
+		parkAzBind: binding.NewString(),
+		parkElBind: binding.NewString(),
+		maxAzBind:  binding.NewString(),
+		minAzBind:  binding.NewString(),
+		maxElBind:  binding.NewString(),
+		minElBind:  binding.NewString(),
+		modeBind:   binding.NewString(),
 	}
-    app.saveMasterData()
-    app.saveDishData()
-    err := app.getMasterData()
-    if err != nil {
-        log.Fatalf("system failed to initialize master data because: %v", err)
-    }
-    err = app.getDishData()
-    if err != nil {
-        log.Fatalf("system failed to initiatlize dish data because: %v", err)
-    }
+	err := app.getMasterData()
+	if err != nil {
+		log.Printf("System failed to initialize master data because: %v\n", err)
+		log.Printf("Initializing the file in the current directory with default data")
+		log.Printf("File name is master.json")
+		app.saveMasterData()
+	}
+	err = app.getDishData()
+	if err != nil {
+		log.Printf("system failed to initiatlize dish data because: %v", err)
+		log.Printf("Initializing the file in the current directory with default data")
+		log.Printf("File name is dish.json")
+		app.saveDishData()
+	}
 	app.azBind.Set(fmt.Sprintf("%5.2f", app.currAz))
 	app.elBind.Set(fmt.Sprintf("%5.2f", app.currEl))
-
-	//	app.incAz()
-	//	app.incEl()
+	app.gridBind.Set(fmt.Sprintf("%s", app.grid))
+	app.parkAzBind.Set(fmt.Sprintf("%5.2f", app.parkAz))
+	app.parkElBind.Set(fmt.Sprintf("%5.2f", app.parkEl))
+	app.maxAzBind.Set(fmt.Sprintf("%5.2f", app.maxAz))
+	app.minAzBind.Set(fmt.Sprintf("%5.2f", app.minAz))
+	app.maxElBind.Set(fmt.Sprintf("%5.2f", app.maxEl))
+	app.minElBind.Set(fmt.Sprintf("%5.2f", app.minEl))
+	switch app.state {
+	case TRACKING_SUN:
+		app.modeBind.Set("Tracking the Sun")
+	case TRACKING_MOON:
+		app.modeBind.Set("Tracking the Moon")
+	case PARKED:
+		app.modeBind.Set("Parked")
+	case IDLE:
+		app.modeBind.Set("Idle")
+	}
 	app.mooner()
 	app.screen()
 }
-
-
-// this is for test purposes only
-//func (app *application) incAz() {
-//	go func() {
-//		var err error
-//		for {
-//			time.Sleep(time.Duration(3) * time.Second)
-//
-//			app.currAz++
-//			if app.currAz > 360.0 {
-//				app.currAz = 0.0
-//			}
-//			err = app.azBind.Set(fmt.Sprintf("%5.2f", app.currAz))
-//			if err != nil {
-//				log.Fatal("from the inside the go routine: ", err)
-//			}
-//		}
-//	}()
-//}
-//
-//func (app *application) incEl() {
-//	var err error
-//	go func() {
-//		for {
-//			time.Sleep(time.Duration(3) * time.Second)
-//
-//			app.currEl++
-//			if app.currEl > 90.0 {
-//				app.currEl = 0
-//			}
-//			err = app.elBind.Set(fmt.Sprintf("%5.2f", app.currEl))
-//			if err != nil {
-//				log.Fatal("from the inside the go routine: ", err)
-//			}
-//		}
-//	}()
-//}
