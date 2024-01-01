@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"fyne.io/fyne/v2"
 	"image/color"
 	"log"
+	"math"
 
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -57,8 +59,10 @@ const (
 	TEXT_MOON     = "The Moon"
 	TEXT_SUN      = "The Sun"
 	TEXT_IDLE     = "Not Tracking"
-	TEXT_CURR_AZ  = "Current Azimuth"
-	TEXT_CURR_EL  = "Current Elevation"
+	TEXT_AZ  = "Azimuth"
+	TEXT_EL  = "Elevation"
+    TEXT_CURR_AZ = "Current Azimuth"
+    TEXT_CURR_EL = "Current Elevation"
 
 	TITLE_POINT = "Point and Adjust"
 
@@ -82,6 +86,30 @@ const (
 
 	SIZE_PAGE_TITLE = 18.0
 )
+
+const (
+	centerX   = 400.0 //center of the scale geometry
+	centerY   = 250.0
+	innerX    = 140.0 //hashmark start point from the center
+	innerY    = 140.0
+	outerX    = 150.0 //hasmark end point from the center
+	outerY    = 150.0
+	txtRadX   = 180.0 //text distance from the center
+	txtRadY   = 180.0
+	limitRadX = 205.0 //for the upper and lower limit labels
+	limitRadY = 205.0
+)
+
+type scaleData struct {
+	ll         float64
+	ul         float64
+	lowerLimit float64
+	upperLimit float64
+	centerX    float64
+	centerY    float64
+	endX       float64
+	endY       float64
+}
 
 func seperator() fyne.CanvasObject {
 	s := canvas.NewRectangle(black)
@@ -160,3 +188,204 @@ func setupColor() color.Color {
 	}
 	return grey
 }
+
+func calcLetter(l int) (w, h float64) {
+	if l == 0 {
+		return -6., -8.0
+	}
+	if l < 100 {
+		return -12., -8.
+	}
+	return -18., -8.
+
+}
+
+func roundUp(x float64) float64 {
+	if int(x)%10 == 0 {
+		return x
+	} else {
+		return 10. * math.Round((x/10.)+0.5)
+	}
+}
+
+func checkLimit(azel string, i, endPoint float64) bool {
+	switch azel {
+	case "az":
+		if i <= endPoint {
+			return true
+		}
+	case "el":
+		if i >= endPoint {
+			return true
+		}
+	default:
+		log.Printf("program bug, did not ask for az or el, asked for %s", azel)
+	}
+	return false
+}
+
+func (app *application) makeScale(azel string) []fyne.CanvasObject {
+
+	var ll, ul, txtX, txtY float64
+	var txt *canvas.Text
+	var inc float64
+	hashMarks := []fyne.CanvasObject{}
+	sD := scaleData{}
+
+	switch azel {
+	case "az":
+		sD.ll = app.minAz
+		sD.ul = app.maxAz
+		sD.lowerLimit = sD.ll - 90.0
+		sD.upperLimit = sD.ul - 90.0
+		sD.centerX = app.sDa.centerX
+		sD.centerY = app.sDa.centerY
+		inc = 10.0
+	case "el":
+		sD.ll = app.minEl
+		sD.ul = app.maxEl
+		sD.upperLimit = 360.0 - sD.ul
+		sD.lowerLimit = 360.0 - sD.ll
+		sD.centerX = app.sDe.centerX
+		sD.centerY = app.sDe.centerY
+		inc = -10.0
+	}
+
+	//locate the first hash mark at the lowerLimit
+	radAlpha := (2.0 * math.Pi) * (sD.lowerLimit / 360.0)
+	cA := math.Cos(radAlpha)
+	sA := math.Sin(radAlpha)
+	hashX := innerX*cA + sD.centerX
+	hashY := innerY*sA + sD.centerY
+	endX := outerX*cA + sD.centerX
+	endY := outerY*sA + sD.centerY
+	ln := canvas.NewLine(red)
+	ln.StrokeWidth = 2
+	ln.Position1 = fyne.Position{float32(hashX), float32(hashY)}
+	ln.Position2 = fyne.Position{float32(endX), float32(endY)}
+	hashMarks = append(hashMarks, ln)
+
+	//label the first hash mark - note that it is 10 units further out than the rest
+	ll, ul = calcLetter(int(sD.ll)) //to compensate for text width
+	txtX = limitRadX*cA + sD.centerX + ll
+	txtY = limitRadY*sA + sD.centerY + ul
+	txt = canvas.NewText(fmt.Sprintf("%4.0f", sD.ll), color.Black)
+	txt.Move(fyne.Position{float32(txtX), float32(txtY)})
+	txt.TextStyle.Bold = true //just for the limit labels
+	hashMarks = append(hashMarks, txt)
+
+	//calculate the bounds of the hash marks
+	var startPoint float64
+
+	startPoint = roundUp(sD.lowerLimit)
+	endPoint := 10 * math.Round(sD.upperLimit/10.) //truncate to 10s
+
+	//plot the hash marks and labels around the scale excluding the limit hashmarks
+	for i := startPoint; checkLimit(azel, i, endPoint); i += inc {
+		switch azel {
+		case "az":
+			if i > sD.upperLimit {
+				continue
+			}
+		case "el":
+			if i > sD.lowerLimit {
+				continue
+			}
+		default:
+			log.Printf("program bug, did not ask for az or el, asked for %s", azel)
+		}
+
+		radAlpha = (2.0 * math.Pi * i) / 360.0
+		cA = math.Cos(radAlpha)
+		sA = math.Sin(radAlpha)
+		hashX := innerX*cA + sD.centerX
+		hashY := innerY*sA + sD.centerY
+		endX := outerX*cA + sD.centerX
+		endY := outerY*sA + sD.centerY
+
+		ll, ul := calcLetter(int(i) + 90) //+90 is to correct for the fyne geometry
+		txtX = txtRadX*cA + sD.centerX + ll
+		txtY = txtRadY*sA + sD.centerY + ul
+
+		switch azel {
+		case "az":
+			txt = canvas.NewText(fmt.Sprintf("%4.0f", i+90), color.Black)
+		case "el":
+			txt = canvas.NewText(fmt.Sprintf("%4.0f", 360.-i), color.Black)
+		default:
+			log.Printf("program bug, did not ask for az or el, asked for %s", azel)
+		}
+
+		txt.Move(fyne.Position{float32(txtX), float32(txtY)})
+		hashMarks = append(hashMarks, txt)
+		ln := canvas.NewLine(red)
+		ln.StrokeWidth = 2
+		ln.Position1 = fyne.Position{float32(hashX), float32(hashY)}
+		ln.Position2 = fyne.Position{float32(endX), float32(endY)}
+		hashMarks = append(hashMarks, ln)
+	}
+
+	//Upper limit hashmark and label
+	radAlpha = (2.0 * math.Pi) * (sD.upperLimit / 360.0)
+	cA = math.Cos(radAlpha)
+	sA = math.Sin(radAlpha)
+	hashX = innerX*cA + sD.centerX
+	hashY = innerX*sA + sD.centerY
+	endX = outerX*cA + sD.centerX
+	endY = outerY*sA + sD.centerY
+	ln = canvas.NewLine(red)
+	ln.StrokeWidth = 2
+	ln.Position1 = fyne.Position{float32(hashX), float32(hashY)}
+	ln.Position2 = fyne.Position{float32(endX), float32(endY)}
+	hashMarks = append(hashMarks, ln)
+
+	ll, ul = calcLetter(int(sD.upperLimit))
+	txtX = limitRadX*cA + sD.centerX + ll
+	txtY = limitRadY*sA + sD.centerY + ul
+	switch azel {
+	case "az":
+		txt = canvas.NewText(fmt.Sprintf("%4.0f", sD.ul), color.Black)
+	case "el":
+		txt = canvas.NewText(fmt.Sprintf("%4.0f", sD.ul), color.Black)
+	default:
+		log.Printf("program bug, did not ask for az or el, asked for %s", azel)
+	}
+	txt.Move(fyne.Position{float32(txtX), float32(txtY)})
+	txt.TextStyle.Bold = true
+	hashMarks = append(hashMarks, txt)
+
+	return hashMarks
+
+}
+
+//func (app *application) makeAzDial() fyne.CanvasObject {
+
+//}
+
+//func (app *application) azimuthDial() *fyne.Container{
+//
+//    sDa := &scaleData{
+//		ll:      app.minAz,
+//		ul:      app.maxAz,
+//		centerX: 250.0,
+//		centerY: 250.0,
+//		endX:    250.0,
+//		endY:    100.0,
+//	}
+//	hashMarksa := sDa.makeScale("az")
+//
+//    //define the dial line and locate it
+//    la := canvas.NewLine(red)
+//    la.StrokeWidth = 3
+//	lp1a := fyne.Position{float32(sDa.centerX), float32(sDa.centerY)}
+//    la.Position1 = lp1a
+//    radThetaE :=( (2.0 * math.Pi) * (app.currAz - 90.0)) / 360.0
+//	endX := innerX * math.Cos(radThetaE) + sD.centerX
+//	endY := innerY * math.Sin(radThetaE) + sD.centerY
+//	lp2a := fyne.Position{float32(endX), float32(endY)}
+//	la.Position2 = lp2a
+//    app.azDialBind.Set(dialAzPos)
+//	hashMarksa = append(hashMarksa, la)
+//    return container.NewWithoutLayout(hashMarksa...)
+//
+//}

@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
 	"log"
+//	"math"
 	"strconv"
 	"time"
+
+	"fyne.io/fyne/v2"
+	//    "fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 )
 
 type controllerTime struct {
@@ -22,10 +25,15 @@ type controllerTime struct {
 
 func (app *application) mooner() {
 	go func() {
+//		var lastAz float64
+//		var lastEl float64
+//		var err error
+//		roundZero := true
 		ct := controllerTime{}
 		for {
 			switch app.state {
 			case IDLE:
+//				roundZero = true
 				continue
 			case TRACKING_MOON:
 				ct.getTime()
@@ -33,6 +41,26 @@ func (app *application) mooner() {
 				if checkLimits(az, app.maxAz, app.minAz) && checkLimits(el, app.maxEl, app.minEl) {
 					app.currAz = az
 					app.currEl = el
+//					if !roundZero {
+//						if math.Abs(lastAz-az) > app.moveLimit {
+//							err = app.moveAz(az)
+//							if err != nil {
+//								log.Printf("Error: %v\n", err)
+//							}
+//							lastAz = az
+//						}
+//						if math.Abs(lastEl-el) > app.moveLimit {
+//							app.moveEl(el)
+//							if err != nil {
+//								log.Printf("Error: %v\n", err)
+//							}
+//							lastEl = el
+//						}
+//					} else {
+//						lastAz = az
+//						lastEl = el
+//						roundZero = false
+//					}
 					app.reSync()
 				}
 				fmt.Printf("Moon Azimuth: %5.2f\tMoon Elevation: %5.2f\n", app.currAz, app.currEl)
@@ -42,10 +70,23 @@ func (app *application) mooner() {
 				if checkLimits(az, app.maxAz, app.minAz) && checkLimits(el, app.maxEl, app.minEl) {
 					app.currAz = az
 					app.currEl = el
+//					if !roundZero {
+//						if math.Abs(lastAz-az) > app.moveLimit {
+//							app.moveAz(az)
+//						}
+//						if math.Abs(lastEl-el) > app.moveLimit {
+//							app.moveEl(el)
+//						}
+//					} else {
+//						lastAz = az
+//						lastEl = el
+//						roundZero = false
+//					}
 					app.reSync()
 				}
 				fmt.Printf("Sun Azimuth: %5.2f\tSun Elevation: %5.2f\n", app.currAz, app.currEl)
 			case PARKED:
+//				roundZero = true
 				app.reSync()
 				//continue
 			}
@@ -486,5 +527,13 @@ func (app *application) reSync() {
 	case IDLE:
 		app.modeBind.Set("Idle")
 	}
+	//err = app.azDialBind.Set(app.currAz)
+	//if err != nil {
+	//	log.Fatal("resync data failed azDial: ", err)
+	//}
+	//err = app.elDialBind.Set(app.currEl)
+	//if err != nil {
+	//	log.Fatal("resync data failed elDial: ", err)
+	//}
 
 }

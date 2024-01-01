@@ -8,6 +8,9 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/binding"
+	//    "fyne.io/fyne/v2/canvas"
+
+	"go.bug.st/serial"
 )
 
 const (
@@ -35,6 +38,8 @@ type application struct {
 	currEl     float64
 	masterPath string
 	dishPath   string
+	port       serial.Port
+//	moveLimit  float64
 	azBind     binding.String
 	elBind     binding.String
 	gridBind   binding.String
@@ -45,6 +50,10 @@ type application struct {
 	maxElBind  binding.String
 	minElBind  binding.String
 	modeBind   binding.String
+//	azDialBind fyne.CanvasObject
+//	elDialBind binding.FloatList
+	sDa        *scaleData
+	sDe        *scaleData
 }
 
 func main() {
@@ -52,6 +61,20 @@ func main() {
 	dataPath := "./"
 	masterPath := filepath.Join(dataPath, "master.json")
 	dishPath := filepath.Join(dataPath, "dish.json")
+
+	sDa := &scaleData{
+		centerX: 250.0,
+		centerY: 250.0,
+		endX:    250.0,
+		endY:    100.0,
+	}
+
+	sDe := &scaleData{
+		centerX: 200.0,
+		centerY: 250.0,
+		endX:    200.0,
+		endY:    100.0,
+	}
 
 	app := &application{
 		state:      IDLE,
@@ -67,6 +90,7 @@ func main() {
 		minEl:      0.0,
 		currAz:     125.0,
 		currEl:     30.0,
+//		moveLimit:  0.5,
 		masterPath: masterPath,
 		dishPath:   dishPath,
 		azBind:     binding.NewString(),
@@ -79,6 +103,10 @@ func main() {
 		maxElBind:  binding.NewString(),
 		minElBind:  binding.NewString(),
 		modeBind:   binding.NewString(),
+
+//		elDialBind: binding.NewFloatList(),
+		sDa:        sDa,
+		sDe:        sDe,
 	}
 	err := app.getMasterData()
 	if err != nil {
@@ -94,6 +122,19 @@ func main() {
 		log.Printf("File name is dish.json")
 		app.saveDishData()
 	}
+
+	mode := &serial.Mode{
+		BaudRate: 9600,
+		Parity:   serial.NoParity,
+		DataBits: 8,
+		StopBits: serial.OneStopBit,
+	}
+	usbPort := "/dev/tty.usbserial-A10L2L39"
+	port, err := serial.Open(usbPort, mode) //   tty.usbmodemF412FA9C9C682", mode)
+	if err != nil {
+		log.Printf("failed to open the usb connecttion %s: %v", usbPort, err)
+	}
+	app.port = port
 	app.azBind.Set(fmt.Sprintf("%5.2f", app.currAz))
 	app.elBind.Set(fmt.Sprintf("%5.2f", app.currEl))
 	app.gridBind.Set(fmt.Sprintf("%s", app.grid))
@@ -103,6 +144,9 @@ func main() {
 	app.minAzBind.Set(fmt.Sprintf("%5.2f", app.minAz))
 	app.maxElBind.Set(fmt.Sprintf("%5.2f", app.maxEl))
 	app.minElBind.Set(fmt.Sprintf("%5.2f", app.minEl))
+
+	//    app.azDial = app.makeAzDial()
+
 	switch app.state {
 	case TRACKING_SUN:
 		app.modeBind.Set("Tracking the Sun")

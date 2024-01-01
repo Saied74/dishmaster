@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"fyne.io/fyne/v2"
 	ap "fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"image/color"
 	"log"
+	"math"
+    "time"
 )
 
 type buttonWrap struct {
@@ -65,7 +68,7 @@ func (app *application) screen() {
 	row4 = app.operatePage(w)
 
 	w.SetContent(row4)
-	w.Resize(fyne.NewSize(800, 400))
+	w.Resize(fyne.NewSize(850, 700))
 
 	w.Show()
 
@@ -270,11 +273,16 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	opMode := l.makeLabel()
 	row3 := container.New(layout.NewGridLayout(1), opMode)
 
-	t = &textWrap{txt: TEXT_CURR_AZ, txtClr: black, txtBld: false, bgClr: white}
+	t = &textWrap{txt: TEXT_AZ, txtClr: black, txtBld: false, bgClr: white}
 	currAzLabel := t.makeText()
-	t.txt = TEXT_CURR_EL
+	t.txt = TEXT_EL
 	currElLabel := t.makeText()
 	row4 := container.New(layout.NewGridLayout(2), currAzLabel, currElLabel)
+
+//    t.txt = "Current"
+//    current := t.makeText()
+//    t.txt = "Target"
+//    target := t.makeText()
 
 	l = &labelWrap{
 		txt:    fmt.Sprintf("%5.2f", app.currAz),
@@ -290,11 +298,56 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	currEl := l.makeLabel()
 	row5 := container.New(layout.NewGridLayout(2), currAz, currEl)
 
+	hashMarksa := app.makeScale("az") 
+
+	//define the dial line and locate it
+	la := canvas.NewLine(red)
+	la.StrokeWidth = 3
+	la.Position1 = fyne.Position{float32(app.sDa.centerX), float32(app.sDa.centerY)}
+
+    go func() {
+        for {
+	        radThetaA := ((2.0 * math.Pi) * (app.currAz - 90.0)) / 360.0
+	        endXa := innerX*math.Cos(radThetaA) + app.sDa.centerX
+	        endYa := innerY*math.Sin(radThetaA) + app.sDa.centerY
+	        lp2a := fyne.Position{float32(endXa), float32(endYa)}
+	        la.Position2 = lp2a
+            canvas.Refresh(la)
+            time.Sleep(time.Duration(2)*time.Second)
+        }
+    }()
+    
+	hashMarksa = append(hashMarksa, la)
+	ita := container.NewWithoutLayout(hashMarksa...)
+
+	hashMarkse := app.makeScale("el")
+
+	//define the dial line and locate it
+	le := canvas.NewLine(red)
+	le.StrokeWidth = 3
+	le.Position1 = fyne.Position{float32(app.sDe.centerX), float32(app.sDe.centerY)}
+	
+    go func() {
+        for {
+            radThetaE := ((2.0 * math.Pi) * (360.0 - app.currEl)) / 360.0
+	        endXe := innerX*math.Cos(radThetaE) + app.sDe.centerX
+	        endYe := innerY*math.Sin(radThetaE) + app.sDe.centerY
+	        le.Position2 = fyne.Position{float32(endXe), float32(endYe)}
+            canvas.Refresh(le)
+            time.Sleep(time.Duration(2) * time.Second)
+        }
+    }()
+
+	hashMarkse = append(hashMarkse, le)
+	ite := container.NewWithoutLayout(hashMarkse...)
+
+	row54 := container.New(layout.NewGridLayout(2), ita, ite)
+
 	row55 := seperator()
 
 	rowN := app.basePage(w)
 	operateGrid := container.NewBorder(nil, rowN, nil, nil, container.New(layout.NewVBoxLayout(),
-		row0, row1, row15, row3, row4, row5, row55))
+		row0, row1, row15, row3, row4, row5, row54, row55))
 	return operateGrid
 }
 
