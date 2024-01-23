@@ -20,8 +20,10 @@ type MasterData struct {
 }
 
 type dishData struct {
-	CurrAz float64 `json:"currAz"`
-	CurrEl float64 `json:"currEl"`
+	CurrAz     float64 `json:"currAz"`
+	CurrEl     float64 `json:"currEl"`
+	AzPosition float64 `json:"azPosition"`
+	ElPosition float64 `json:"elPosition"`
 }
 
 func (app *application) getMasterData() error {
@@ -73,6 +75,8 @@ func (app *application) getDishData() error {
 	}
 	app.currAz = j.CurrAz
 	app.currEl = j.CurrEl
+	app.azPosition = j.CurrAz //j.AzPosition //for debugging ease
+	app.elPosition = j.CurrEl //j.ElPosition
 	return nil
 }
 
@@ -99,6 +103,7 @@ func (app *application) saveMasterData() error {
 	if err != nil {
 		return fmt.Errorf("Err openning master file: %v", err)
 	}
+    defer f.Close()
 	_, err = f.Write(m)
 	if err != nil {
 		return fmt.Errorf("Err wirting master file: %v", err)
@@ -110,8 +115,10 @@ func (app *application) saveMasterData() error {
 func (app *application) saveDishData() error {
 	m := []byte{}
 	j := &dishData{
-		CurrAz: app.currAz,
-		CurrEl: app.currEl,
+		CurrAz:     app.currAz,
+		CurrEl:     app.currEl,
+		AzPosition: app.azPosition,
+		ElPosition: app.elPosition,
 	}
 
 	m, err := json.Marshal(j)
@@ -124,7 +131,7 @@ func (app *application) saveDishData() error {
 	if err != nil {
 		return fmt.Errorf("Err openning dish file: %v", err)
 	}
-
+    defer f.Close()
 	_, err = f.Write(m)
 	if err != nil {
 		return fmt.Errorf("Err writing dish file: %v", err)

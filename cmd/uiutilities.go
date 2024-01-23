@@ -59,10 +59,10 @@ const (
 	TEXT_MOON     = "The Moon"
 	TEXT_SUN      = "The Sun"
 	TEXT_IDLE     = "Not Tracking"
-	TEXT_AZ  = "Azimuth"
-	TEXT_EL  = "Elevation"
-    TEXT_CURR_AZ = "Current Azimuth"
-    TEXT_CURR_EL = "Current Elevation"
+	TEXT_CURRENT_AZ       = "Current Azimuth"
+	TEXT_CURRENT_EL       = "Current Elevation"
+	TEXT_CURR_AZ  = "Current Azimuth"
+	TEXT_CURR_EL  = "Current Elevation"
 
 	TITLE_POINT = "Point and Adjust"
 
@@ -90,14 +90,14 @@ const (
 const (
 	centerX   = 400.0 //center of the scale geometry
 	centerY   = 250.0
-	innerX    = 140.0 //hashmark start point from the center
-	innerY    = 140.0
-	outerX    = 150.0 //hasmark end point from the center
-	outerY    = 150.0
-	txtRadX   = 180.0 //text distance from the center
-	txtRadY   = 180.0
-	limitRadX = 205.0 //for the upper and lower limit labels
-	limitRadY = 205.0
+	innerX    = 100.0 //140.0 //hashmark start point from the center
+	innerY    = 100.0 //140.0
+	outerX    = 110.0 //150.0 //hasmark end point from the center
+	outerY    = 110.0 //150.0
+	txtRadX   = 140.0 //180.0 //text distance from the center
+	txtRadY   = 140.0 //180.0
+	limitRadX = 160.0 //205.0 //for the upper and lower limit labels
+	limitRadY = 160.0 //205.0
 )
 
 type scaleData struct {

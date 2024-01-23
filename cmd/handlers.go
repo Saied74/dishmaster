@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
-//	"math"
+	//	"math"
 	"strconv"
 	"time"
 
@@ -23,17 +23,17 @@ type controllerTime struct {
 	ut    float64
 }
 
+const (
+	azPulses = 200 //for the 3m dish
+	elPulses = 200 //for the 3m dish
+)
+
 func (app *application) mooner() {
 	go func() {
-//		var lastAz float64
-//		var lastEl float64
-//		var err error
-//		roundZero := true
 		ct := controllerTime{}
 		for {
 			switch app.state {
 			case IDLE:
-//				roundZero = true
 				continue
 			case TRACKING_MOON:
 				ct.getTime()
@@ -41,54 +41,21 @@ func (app *application) mooner() {
 				if checkLimits(az, app.maxAz, app.minAz) && checkLimits(el, app.maxEl, app.minEl) {
 					app.currAz = az
 					app.currEl = el
-//					if !roundZero {
-//						if math.Abs(lastAz-az) > app.moveLimit {
-//							err = app.moveAz(az)
-//							if err != nil {
-//								log.Printf("Error: %v\n", err)
-//							}
-//							lastAz = az
-//						}
-//						if math.Abs(lastEl-el) > app.moveLimit {
-//							app.moveEl(el)
-//							if err != nil {
-//								log.Printf("Error: %v\n", err)
-//							}
-//							lastEl = el
-//						}
-//					} else {
-//						lastAz = az
-//						lastEl = el
-//						roundZero = false
-//					}
+					fmt.Println(az, el)
 					app.reSync()
 				}
-				fmt.Printf("Moon Azimuth: %5.2f\tMoon Elevation: %5.2f\n", app.currAz, app.currEl)
+				fmt.Printf("Moon Azimuth: %5.2f\tMoon Elevation: %5.2f\n", az, el)
 			case TRACKING_SUN:
 				ct.getTime()
 				_, _, _, az, el, _, _ := sun(ct.year, ct.month, ct.day, ct.ut, app.lon, app.lat)
 				if checkLimits(az, app.maxAz, app.minAz) && checkLimits(el, app.maxEl, app.minEl) {
 					app.currAz = az
 					app.currEl = el
-//					if !roundZero {
-//						if math.Abs(lastAz-az) > app.moveLimit {
-//							app.moveAz(az)
-//						}
-//						if math.Abs(lastEl-el) > app.moveLimit {
-//							app.moveEl(el)
-//						}
-//					} else {
-//						lastAz = az
-//						lastEl = el
-//						roundZero = false
-//					}
 					app.reSync()
 				}
-				fmt.Printf("Sun Azimuth: %5.2f\tSun Elevation: %5.2f\n", app.currAz, app.currEl)
+				fmt.Printf("Sun Azimuth: %5.2f\tSun Elevation: %5.2f\n", az, el)
 			case PARKED:
-//				roundZero = true
 				app.reSync()
-				//continue
 			}
 			time.Sleep(time.Duration(30) * time.Second)
 		}
@@ -343,8 +310,8 @@ func (app *application) updateTarget(azimuth, elevation string) {
 	app.saveDishData()
 	app.reSync()
 
-	fmt.Println("Target Azimuth: ", azimuth)
-	fmt.Println("Target Elevattion: ", elevation)
+	fmt.Println("Target Azimuth: ", app.currAz, app.azPosition)
+	fmt.Println("Target Elevattion: ", app.currEl, app.elPosition)
 }
 
 func (app *application) adjustUp() {
@@ -412,6 +379,10 @@ func (app *application) pushedTrack() {
 			app.currAz = az
 			app.currEl = el
 			app.reSync()
+		} else {
+			app.state = IDLE
+			msg := fmt.Sprintf("Sun Az: %5.1f\t El: %5.1f\t is outside the system limits", az, el)
+			app.handleError(msg)
 		}
 	case TRACKING_MOON:
 		app.state = TRACKING_MOON
@@ -422,6 +393,10 @@ func (app *application) pushedTrack() {
 			app.currAz = az
 			app.currEl = el
 			app.reSync()
+		} else {
+			app.state = IDLE
+			msg := fmt.Sprintf("Moon Az: %5.1f\t El: %5.1f\t is outside the system limits", az, el)
+			app.handleError(msg)
 		}
 	default:
 		app.state = IDLE
@@ -474,7 +449,7 @@ func (app *application) handleError(msg string) {
 		container.New(layout.NewVBoxLayout(), row1, row2))
 
 	errW.SetContent(sug)
-	errW.Resize(fyne.NewSize(100, 80))
+	errW.Resize(fyne.NewSize(300, 80))
 
 	errW.Show()
 
@@ -489,6 +464,14 @@ func (app *application) reSync() {
 	if err != nil {
 		log.Fatal("resync data failed in currEl: ", err)
 	}
+    err = app.azPosBind.Set(fmt.Sprintf("%5.2f", app.azPosition))
+    if err != nil {
+        log.Fatal("resync datta failed in azPosition")
+    }
+    err = app.elPosBind.Set(fmt.Sprintf("%5.2f", app.elPosition))
+    if err != nil {
+        log.Fatal("resync datta failed in elPosition")
+    }
 	err = app.gridBind.Set(fmt.Sprintf("%s%s", TEXT_GRID_VALUE, app.grid))
 	if err != nil {
 		log.Fatal("resync data failed in grid: ", err)
@@ -527,13 +510,81 @@ func (app *application) reSync() {
 	case IDLE:
 		app.modeBind.Set("Idle")
 	}
-	//err = app.azDialBind.Set(app.currAz)
-	//if err != nil {
-	//	log.Fatal("resync data failed azDial: ", err)
-	//}
-	//err = app.elDialBind.Set(app.currEl)
-	//if err != nil {
-	//	log.Fatal("resync data failed elDial: ", err)
-	//}
+}
+
+func (app *application) recalibrate(azimuth, elevation string) {
+    fmt.Println("recalibratte")
+	var msg string
+
+	az, err := strconv.ParseFloat(azimuth, 64)
+	if err != nil {
+		msg = fmt.Sprintf("Target Az. entry error: %v.  It is not a number, you entered \"%s\", try again", err, azimuth)
+		app.handleError(msg)
+		return
+	}
+	if az < 0.0 {
+		msg = fmt.Sprintf("Target Az. cannot be less than 0, you entered \"%s\" try again", azimuth)
+		app.handleError(msg)
+		return
+	}
+	if az > 360.0 {
+		msg = fmt.Sprintf("Target Az. cannot be more than 360, you entered \"%s\" try again", azimuth)
+		app.handleError(msg)
+		return
+	}
+	if az > app.maxAz {
+		msg = fmt.Sprintf("Target Az cannot be larger than max Az, you entered \"%s\", try again", azimuth)
+		app.handleError(msg)
+		return
+	}
+	if az < app.minAz {
+		msg = fmt.Sprintf("Target Az cannot be smaller than min Az, you entered \"%s\", try again", azimuth)
+		app.handleError(msg)
+		return
+	}
+
+	el, err := strconv.ParseFloat(elevation, 64)
+	if err != nil {
+		msg = fmt.Sprintf("Target El. entry error: %v.  It is not a number, you entered \"%s\", try again", err, elevation)
+		app.handleError(msg)
+		return
+	}
+	if el < 0.0 {
+		msg = fmt.Sprintf("Target El. cannot be less than 0, you entered \"%s\" try again", elevation)
+		app.handleError(msg)
+		return
+	}
+	if el > 90.0 {
+		msg = fmt.Sprintf("Target El cannot be more than 90, you entered \"%s\" try again", elevation)
+		app.handleError(msg)
+		return
+	}
+	if el > app.maxEl {
+		msg = fmt.Sprintf("Target El cannot be more than max El, you entered \"%s\" try again", elevation)
+		app.handleError(msg)
+		return
+	}
+	if el < app.minEl {
+		msg = fmt.Sprintf("Target El cannot be less than min El, you entered \"%^s\", try again", elevation)
+		app.handleError(msg)
+		return
+	}
+
+	azRegister := int32(az * azPulses)
+	elRegister := int32(el * elPulses)
+
+	err = app.writeQuadRegister(azRegister, "az")
+	if err != nil {
+		log.Printf("Updating Az register failed: %v", err)
+	}
+	err = app.writeQuadRegister(elRegister, "el")
+	if err != nil {
+		log.Printf("Updating El register failed: %v", err)
+	}
+    app.azPosition = az 
+    app.currAz = az
+	app.elPosition = el
+    app.currEl = el
+    app.reSync()
 
 }
