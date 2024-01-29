@@ -5,15 +5,12 @@ import (
 	"log"
 	"path/filepath"
 	"time"
-//    "os"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/binding"
-	//    "fyne.io/fyne/v2/canvas"
 
 	"go.bug.st/serial"
 )
-
 
 const (
 	TRACKING_SUN  = "trackingSun"
@@ -36,17 +33,17 @@ type application struct {
 	minAz      float64
 	maxEl      float64
 	minEl      float64
-	currAz     float64
+	currAz     float64 //this is really target position
 	currEl     float64
-	azPosition float64
+	azPosition float64 //this is current position
 	elPosition float64
 	masterPath string
 	dishPath   string
 	port       serial.Port
 	azBind     binding.String
 	elBind     binding.String
-    azPosBind  binding.String
-    elPosBind  binding.String
+	azPosBind  binding.String
+	elPosBind  binding.String
 	gridBind   binding.String
 	parkAzBind binding.String
 	parkElBind binding.String
@@ -98,8 +95,8 @@ func main() {
 		dishPath:   dishPath,
 		azBind:     binding.NewString(),
 		elBind:     binding.NewString(),
-        azPosBind:  binding.NewString(),
-        elPosBind:  binding.NewString(),
+		azPosBind:  binding.NewString(),
+		elPosBind:  binding.NewString(),
 		gridBind:   binding.NewString(),
 		parkAzBind: binding.NewString(),
 		parkElBind: binding.NewString(),
@@ -125,26 +122,6 @@ func main() {
 		log.Printf("File name is dish.json")
 		app.saveDishData()
 	}
-//    var msg string
-//    var mismatch bool
-//    switch {
-//    case app.currAz != app.azPosition && app.currEl != app.elPosition:
-//        msg = fmt.Sprintf("Target Az %5.2f and current Az %5.2f and target El %5.2f and current El %5.2f do not match\ncorrect the situation and restart\n",
-//                          app.currAz, app.azPosition, app.currEl, app.elPosition)
-//        mismatch = true
-//    case app.currAz != app.azPosition:
-//        msg = fmt.Sprintf("Target Az %5.2f and current Az %5.2f do not match\ncorrect the situation and restart\n",
-//                          app.currAz, app.azPosition)
-//        mismatch = true
-//    case app.currEl != app.elPosition:
-//        msg = fmt.Sprintf("Target El %5.2f and current El %5.2f do not match\ncorrect the situation and restart\n",
-//                          app.currEl, app.elPosition)
-//        mismatch = true
-//    }
-//    if mismatch {
-//        log.Printf(msg)
-//        os.Exit(1)    
-//    }
 	mode := &serial.Mode{
 		BaudRate: 115200,
 		Parity:   serial.NoParity,
@@ -156,25 +133,25 @@ func main() {
 	if err != nil {
 		log.Printf("failed to open the usb connecttion %s: %v", usbPort, err)
 	}
-    if port != nil {
-	port.SetReadTimeout(time.Duration(2) * time.Second)
-	app.port = port
-    azRegister := int32(app.currAz * azPulses)
-	elRegister := int32(app.currEl * elPulses)
+	if port != nil {
+		port.SetReadTimeout(time.Duration(2) * time.Second)
+		app.port = port
+		azRegister := int32(app.currAz * azPulses)
+		elRegister := int32(app.currEl * elPulses)
 
-	err = app.writeQuadRegister(azRegister, "az")
-	if err != nil {
-		log.Printf("Updating Az register failed: %v", err)
+		err = app.writeQuadRegister(azRegister, "az")
+		if err != nil {
+			log.Printf("Updating Az register failed: %v", err)
+		}
+		err = app.writeQuadRegister(elRegister, "el")
+		if err != nil {
+			log.Printf("Updating El register failed: %v", err)
+		}
 	}
-	err = app.writeQuadRegister(elRegister, "el")
-	if err != nil {
-		log.Printf("Updating El register failed: %v", err)
-	}
-    }
 	app.azBind.Set(fmt.Sprintf("%5.2f", app.currAz))
 	app.elBind.Set(fmt.Sprintf("%5.2f", app.currEl))
-    app.azPosBind.Set(fmt.Sprintf("%5.2f", app.azPosition))
-    app.elPosBind.Set(fmt.Sprintf("%5.2f", app.elPosition))
+	app.azPosBind.Set(fmt.Sprintf("%5.2f", app.azPosition))
+	app.elPosBind.Set(fmt.Sprintf("%5.2f", app.elPosition))
 	app.gridBind.Set(fmt.Sprintf("%s", app.grid))
 	app.parkAzBind.Set(fmt.Sprintf("%5.2f", app.parkAz))
 	app.parkElBind.Set(fmt.Sprintf("%5.2f", app.parkEl))
@@ -182,8 +159,6 @@ func main() {
 	app.minAzBind.Set(fmt.Sprintf("%5.2f", app.minAz))
 	app.maxElBind.Set(fmt.Sprintf("%5.2f", app.maxEl))
 	app.minElBind.Set(fmt.Sprintf("%5.2f", app.minEl))
-
-	//    app.azDial = app.makeAzDial()
 
 	switch app.state {
 	case TRACKING_SUN:

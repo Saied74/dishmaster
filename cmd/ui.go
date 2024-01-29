@@ -104,9 +104,6 @@ func (app *application) setupPage(w fyne.Window) fyne.CanvasObject {
 	l.bind = app.gridBind
 	currGrid := l.makeLabel()
 
-	//	t.txt = TEXT_GRID_VALUE + app.grid
-	//	currGrid := t.makeText()
-
 	newGrid := widget.NewEntry()
 	newGrid.SetPlaceHolder(ENTER_GRID)
 	row2 := container.New(layout.NewGridLayout(2), currGrid, newGrid)
@@ -283,11 +280,6 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
     elPosLabel := t.makeText()
 	row4 := container.New(layout.NewGridLayout(4), currAzLabel, azPosLabel, currElLabel, elPosLabel)
 
-	//    t.txt = "Current"
-	//    current := t.makeText()
-	//    t.txt = "Target"
-	//    target := t.makeText()
-
 	l = &labelWrap{
 		txt:    fmt.Sprintf("%5.2f", app.currAz),
 		txtClr: black,
@@ -296,7 +288,6 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	}
 	l.bind = app.azBind
 	currAz := l.makeLabel()
-    
     l.txt = fmt.Sprintf("%5.2f", app.azPosition)
     l.bind = app.azPosBind
     azPosition := l.makeLabel()
@@ -321,7 +312,6 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	go func() {
 		for {
             radThetaA := ((2.0 * math.Pi) * (app.azPosition - 90.0)) / 360.0
-//			radThetaA := ((2.0 * math.Pi) * (app.currAz - 90.0)) / 360.0
 			endXa := innerX*math.Cos(radThetaA) + app.sDa.centerX
 			endYa := innerY*math.Sin(radThetaA) + app.sDa.centerY
 			lp2a := fyne.Position{float32(endXa), float32(endYa)}
@@ -344,7 +334,6 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	go func() {
 		for {
             radThetaE := ((2.0 * math.Pi) * (360.0 - app.elPosition)) / 360.0
-//			radThetaE := ((2.0 * math.Pi) * (360.0 - app.currEl)) / 360.0
 			endXe := innerX*math.Cos(radThetaE) + app.sDe.centerX
 			endYe := innerY*math.Sin(radThetaE) + app.sDe.centerY
 			le.Position2 = fyne.Position{float32(endXe), float32(endYe)}
