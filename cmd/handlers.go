@@ -24,8 +24,8 @@ type controllerTime struct {
 }
 
 const (
-	azPulses = 200 //for the 3m dish
-	elPulses = 200 //for the 3m dish
+	azPulses = azMul //for the sub lunar rotator  200 //for the 3m dish
+	elPulses = elMul //for the sub lunar rotator 200 //for the 3m dish
 )
 
 func (app *application) mooner() {
@@ -464,14 +464,14 @@ func (app *application) reSync() {
 	if err != nil {
 		log.Fatal("resync data failed in currEl: ", err)
 	}
-    err = app.azPosBind.Set(fmt.Sprintf("%5.2f", app.azPosition))
-    if err != nil {
-        log.Fatal("resync datta failed in azPosition")
-    }
-    err = app.elPosBind.Set(fmt.Sprintf("%5.2f", app.elPosition))
-    if err != nil {
-        log.Fatal("resync datta failed in elPosition")
-    }
+	err = app.azPosBind.Set(fmt.Sprintf("%5.2f", app.azPosition))
+	if err != nil {
+		log.Fatal("resync datta failed in azPosition")
+	}
+	err = app.elPosBind.Set(fmt.Sprintf("%5.2f", app.elPosition))
+	if err != nil {
+		log.Fatal("resync datta failed in elPosition")
+	}
 	err = app.gridBind.Set(fmt.Sprintf("%s%s", TEXT_GRID_VALUE, app.grid))
 	if err != nil {
 		log.Fatal("resync data failed in grid: ", err)
@@ -513,7 +513,7 @@ func (app *application) reSync() {
 }
 
 func (app *application) recalibrate(azimuth, elevation string) {
-    fmt.Println("recalibratte")
+	fmt.Println("recalibratte")
 	var msg string
 
 	az, err := strconv.ParseFloat(azimuth, 64)
@@ -570,8 +570,8 @@ func (app *application) recalibrate(azimuth, elevation string) {
 		return
 	}
 
-	azRegister := int32(az * azPulses)
-	elRegister := int32(el * elPulses)
+	azRegister := uint32(az * azPulses)
+	elRegister := uint32(el * elPulses)
 
 	err = app.writeQuadRegister(azRegister, "az")
 	if err != nil {
@@ -581,10 +581,10 @@ func (app *application) recalibrate(azimuth, elevation string) {
 	if err != nil {
 		log.Printf("Updating El register failed: %v", err)
 	}
-    app.azPosition = az 
-    app.currAz = az
+	app.azPosition = az
+	app.currAz = az
 	app.elPosition = el
-    app.currEl = el
-    app.reSync()
+	app.currEl = el
+	app.reSync()
 
 }

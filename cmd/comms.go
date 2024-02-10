@@ -1,11 +1,10 @@
 package main
 
 import (
-    "errors"
+	"errors"
 	"fmt"
 	// "log"
-//    "time"
-
+	"time"
 )
 
 var cmdLen map[int]int = map[int]int{
@@ -67,7 +66,7 @@ func (app *application) writeCmd(rc *roboClaw) error {
 	return nil
 }
 
-func (app *application) writeQuadRegister(c int32, s string) error {
+func (app *application) writeQuadRegister(c uint32, s string) error {
 	wBuff := make([]byte, 6)
 	rBuff := make([]byte, 1)
 	wBuff[0] = address
@@ -85,7 +84,7 @@ func (app *application) writeQuadRegister(c int32, s string) error {
 	wBuff[5] = byte(c)
 
 	crc := crc16(wBuff)
-	wBuff = append(wBuff, byte(crc >> 8))
+	wBuff = append(wBuff, byte(crc>>8))
 	wBuff = append(wBuff, byte(crc))
 	if app.port == nil {
 		return fmt.Errorf("Port is not open %v", wBuff)
@@ -110,10 +109,10 @@ func (app *application) writeQuadRegister(c int32, s string) error {
 	return nil
 }
 
-func (app *application) readQuadRegister(s string) (int32, error) {
-	var r int32
+func (app *application) readQuadRegister(s string) (uint32, error) {
+	var r uint32
 	wBuff := make([]byte, 2)
-	//rBuff := make([]byte, 7)
+	rBuff := make([]byte, 7)
 	wBuff[0] = address
 	switch s {
 	case "az":
@@ -133,23 +132,19 @@ func (app *application) readQuadRegister(s string) (int32, error) {
 	if n != 2 {
 		return 0, fmt.Errorf("did not write 2 bytes, it wrote %d", n)
 	}
-    //time.Sleep(time.Duration(120) * time.Millisecond)
-	//n, err = app.port.Read(rBuff)
-    rBuff, err := app.readN(7)
+	time.Sleep(time.Duration(120) * time.Millisecond)
+	n, err = app.port.Read(rBuff)
 	if err != nil {
-        if errors.Is(err, noReadN) {
-            return 0, err
-        }
 		return 0, fmt.Errorf("failed to read from usb port: %v", err)
 	}
-	//if n != 7 {
-	//	return 0, fmt.Errorf("did not read 9 byte, read %d:", n)
-	//}
-	crc := crc16(rBuff[0:5])
+	if n != 7 {
+		return 0, fmt.Errorf("did not read 9 byte, read %d:", n)
+	}
+	crc := crc16(append(wBuff, rBuff[0:5]...))
 	highByte := byte(crc >> 8)
 	lowByte := byte(crc)
 	if highByte != rBuff[5] && lowByte != rBuff[6] {
-		return 0, fmt.Errorf("CRC mismtach on read quad registers %v", rBuff)
+		return 0, fmt.Errorf("CRC mismtach on read quad registers %v\t%v\t%v", rBuff, highByte, lowByte)
 	}
 	if rBuff[4]&underFlow != 0x00 {
 		return 0, fmt.Errorf("Quad counter underflowed")
@@ -158,17 +153,108 @@ func (app *application) readQuadRegister(s string) (int32, error) {
 		return 0, fmt.Errorf("Quad counter overflowed")
 	}
 
-	r = r | int32(rBuff[0])<<24
-	r = r | int32(rBuff[1])<<16
-	r = r | int32(rBuff[2])<<8
-	r = r | int32(rBuff[3])
+	r = r | uint32(rBuff[0])<<24
+	r = r | uint32(rBuff[1])<<16
+	r = r | uint32(rBuff[2])<<8
+	r = r | uint32(rBuff[3])
 
 	return r, nil
 }
 
+type pid struct {
+	q uint32 //quadrature pulses per second (QPPS)
+	p uint32 //proportional gain in pid
+	i uint32 //integral gain in pid
+	d uint32 //derivative gain in pid
+}
+
+func (app *application) setVelocityPID(p *pid, s string) error {
+	wBuff := make([]byte, 20)
+	rBuff := make([]byte, 1)
+	wBuff[0] = address
+	switch s {
+	case "az":
+		wBuff[1] = 28
+	case "el":
+		wBuff[1] = 29
+	default:
+		return fmt.Errorf("Bad command \"%s\" in writeRegister", s)
+	}
+	packBytes(p.d, wBuff, 2)  //write d of pid from 2 thru 5
+	packBytes(p.p, wBuff, 6)  //write p of pid from 6 thru 9
+	packBytes(p.i, wBuff, 10) //write i of pid from 10 thru 13
+	packBytes(p.q, wBuff, 14) //write qpps from 14 thru 17
+
+	crc := crc16(wBuff[:18])
+	wBuff[18] = byte(crc >> 8)
+	wBuff[19] = byte(crc)
+	if app.port == nil {
+		return fmt.Errorf("Port is not open %v", wBuff)
+	}
+	n, err := app.port.Write(wBuff)
+	if err != nil {
+		return fmt.Errorf("failed write to usb port %v", err)
+	}
+	if n != 20 {
+		return fmt.Errorf("did not write 20 bytes, it wrote %d", n)
+	}
+	n, err = app.port.Read(rBuff)
+	if err != nil {
+		return fmt.Errorf("failed to read from usb port: %v", err)
+	}
+	if n != 1 {
+		return fmt.Errorf("did not read one byte, read %d:", n)
+	}
+	if rBuff[0] != ack {
+		return fmt.Errorf("did not get a %X in return, got %v", ack, rBuff)
+	}
+	return nil
+}
+
+func packBytes(c uint32, b []byte, n int) {
+	b[n] = byte(c >> 24)
+	b[n+1] = byte(c >> 16)
+	b[n+2] = byte(c >> 8)
+	b[n+3] = byte(c)
+}
+
+func (app *application) setStdConfig(config uint16) error {
+	wBuff := make([]byte, 6)
+	rBuff := make([]byte, 1)
+	wBuff[0] = address
+	wBuff[1] = 98
+	wBuff[2] = byte(config >> 8)
+	wBuff[3] = byte(config)
+
+	crc := crc16(wBuff[:4])
+	wBuff[4] = byte(crc >> 8)
+	wBuff[5] = byte(crc)
+	if app.port == nil {
+		return fmt.Errorf("Port is not open %v", wBuff)
+	}
+	n, err := app.port.Write(wBuff)
+	if err != nil {
+		return fmt.Errorf("failed write to usb port %v", err)
+	}
+	if n != 6 {
+		return fmt.Errorf("did not write 6 bytes, it wrote %d", n)
+	}
+	n, err = app.port.Read(rBuff)
+	if err != nil {
+		return fmt.Errorf("failed to read from usb port: %v", err)
+	}
+	if n != 1 {
+		return fmt.Errorf("did not read one byte, read %d:", n)
+	}
+	if rBuff[0] != ack {
+		return fmt.Errorf("did not get a %X in return, got %v", ack, rBuff)
+	}
+	return nil
+}
+
 // call this function with the exact slice you want processed
 func crc16(message []byte) uint16 {
-	crc := uint16(0xFFFF) // Initial value
+	crc := uint16(0x0000) // Initial value
 	for _, b := range message {
 		crc ^= uint16(b) << 8
 		for i := 0; i < 8; i++ {
@@ -183,29 +269,29 @@ func crc16(message []byte) uint16 {
 }
 
 func (app *application) readN(n int) ([]byte, error) {
-    rBuff := []byte{}
-    b := make([]byte, n)
-    k := 0
-    m := 0 //read byte counter
-    for i := 0; i < n; i += k {
-        k, err := app.port.Read(b)
-        //fmt.Println("K: ", k, n)
-	    if err != nil {
-		    return []byte{}, fmt.Errorf("failed readN")
-	    }
-        if k == 0 {
-            return []byte{}, noReadN
-        }
-	    if k == n {
-            return b, nil
-        }
-        m += k
-        rBuff = append(rBuff, b[:k]...)
-        //fmt.Println("rBuff: ", rBuff)
+	rBuff := []byte{}
+	b := make([]byte, n)
+	k := 0
+	m := 0 //read byte counter
+	for i := 0; i < n; i += k {
+		k, err := app.port.Read(b)
+		//fmt.Println("K: ", k, n)
+		if err != nil {
+			return []byte{}, fmt.Errorf("failed readN")
+		}
+		if k == 0 {
+			return []byte{}, noReadN
+		}
+		if k == n {
+			return b, nil
+		}
+		m += k
+		rBuff = append(rBuff, b[:k]...)
+		//fmt.Println("rBuff: ", rBuff)
 	}
-    if m != n {
-        return []byte{}, fmt.Errorf("did not read %d bytes, read %d", n, m)
-    } 
-    return rBuff, nil
+	if m != n {
+		return []byte{}, fmt.Errorf("did not read %d bytes, read %d", n, m)
+	}
+	return rBuff, nil
 
-} 
+}

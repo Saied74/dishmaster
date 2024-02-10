@@ -2,8 +2,10 @@ package main
 
 import (
 	"errors"
+	//   "fmt"
 	"log"
 	"math"
+	//    "os"
 	"time"
 )
 
@@ -32,9 +34,9 @@ const (
 	moveBwd
 	moveUp
 	moveDn
-    phaseZero
-    phaseOne
-    phaseTwo
+	phaseZero
+	phaseOne
+	phaseTwo
 	idle
 	rampUpForward
 	rampUpBackward
@@ -51,18 +53,18 @@ const (
 )
 
 const (
-	moonMoveLimit = 0.2
-	sunMoveLimit  = 0.2
-	azMul         = 200.0 //3m dish only
-	elMul         = 200.0 //3m dish only
-	dT            = 500   //milliseconds
-	azFast        = 127.0  //ramp velocity up and down steps (out of 127)
-	elFast        = 127.0
-    azSlow        = 65.0
-    elSlow        = 65.0
+	moonMoveLimit = 1.0  // for the Sub Lunar // 0.2
+	sunMoveLimit  = 1.0  // for the Sub Lunar // 0.2
+	azMul         = 6.68 //1.67  // for the Sub Lunar // 200.0  //3m dish only
+	elMul         = 6.68 //1.67  // for the Sub Lunar // 200.0  //3m dish only
+	dT            = 500  //milliseconds
+	azFast        = 60.0 //127.0 //ramp velocity up and down steps (out of 127)
+	elFast        = 60.0 //127.0 //fir the sublunar
+	azSlow        = 20.0 //65.0
+	elSlow        = 20.0 //65.0
 	azEndLimit    = 0.21 //degrees of travel needed to stop the motor
 	elEndLimit    = 0.21
-	near          = 1.0 //distance to be considered on target
+	near          = 2.0 // for the Sub Lunar //1.0 //distance to be considered on target
 )
 
 type roboClaw struct {
@@ -71,7 +73,7 @@ type roboClaw struct {
 }
 
 func (app *application) move() {
-	var limit float64 = 0.2
+	var limit float64 = 0.50 // for the Sub Lunar // 0.2
 	var azPhase, elPhase int = idle, idle
 	var err error
 	go func() {
@@ -88,106 +90,106 @@ func (app *application) move() {
 				continue
 			}
 			//move when there is a gap between the current and desired position
-            az := math.Abs(app.currAz - app.azPosition)
-            switch {
-            case az > near:
-                azPhase = phaseTwo
-            case az > limit:
-                azPhase = phaseOne
-            default:
-                azPhase = phaseZero
-            }
-            azD := app.currAz - app.azPosition //+ means move Fwd, - means move Bwd
-            if azPhase == phaseTwo {
-                if azD >= 0 {
-                    err = app.writeCmd(&roboClaw{moveFwd, azFast})
-				    if err != nil {
-					    app.moveError(err, "forward cmd fast")
-				    }
-                } else {
-                    err = app.writeCmd(&roboClaw{moveBwd, azFast})
-				    if err != nil {
-					    app.moveError(err, "backwards cmd fast")
-				    }
-                }
-            }
-            if azPhase == phaseOne {
-                if azD >= 0 {
-                    err = app.writeCmd(&roboClaw{moveFwd, azSlow})
-				    if err != nil {
-					    app.moveError(err, "forward cmd slow")
-				    }
-                } else {
-                    err = app.writeCmd(&roboClaw{moveBwd, azSlow})
-				    if err != nil {
-					    app.moveError(err, "backwards cmd slow")
-				    }
-                }
-            }
-            if azPhase == phaseZero {
-                if azD >= 0 {
-                    err = app.writeCmd(&roboClaw{moveFwd, 0})
-				    if err != nil {
-					    app.moveError(err, "forward cmd stop")
-				    }
-                } else {
-                    err = app.writeCmd(&roboClaw{moveBwd, 0})
-				    if err != nil {
-					    app.moveError(err, "backwards cmd stop")
-				    }
-                }
-            }
+			az := math.Abs(app.currAz - app.azPosition)
+			switch {
+			case az > near:
+				azPhase = phaseTwo
+			case az > limit:
+				azPhase = phaseOne
+			default:
+				azPhase = phaseZero
+			}
+			azD := app.currAz - app.azPosition //+ means move Fwd, - means move Bwd
+			if azPhase == phaseTwo {
+				if azD >= 0 {
+					err = app.writeCmd(&roboClaw{moveFwd, azFast})
+					if err != nil {
+						app.moveError(err, "forward cmd fast")
+					}
+				} else {
+					err = app.writeCmd(&roboClaw{moveBwd, azFast})
+					if err != nil {
+						app.moveError(err, "backwards cmd fast")
+					}
+				}
+			}
+			if azPhase == phaseOne {
+				if azD >= 0 {
+					err = app.writeCmd(&roboClaw{moveFwd, azSlow})
+					if err != nil {
+						app.moveError(err, "forward cmd slow")
+					}
+				} else {
+					err = app.writeCmd(&roboClaw{moveBwd, azSlow})
+					if err != nil {
+						app.moveError(err, "backwards cmd slow")
+					}
+				}
+			}
+			if azPhase == phaseZero {
+				if azD >= 0 {
+					err = app.writeCmd(&roboClaw{moveFwd, 0})
+					if err != nil {
+						app.moveError(err, "forward cmd stop")
+					}
+				} else {
+					err = app.writeCmd(&roboClaw{moveBwd, 0})
+					if err != nil {
+						app.moveError(err, "backwards cmd stop")
+					}
+				}
+			}
 
-            el := math.Abs(app.currEl - app.elPosition)
-            switch {
-            case el > near:
-                elPhase = phaseTwo
-            case el > limit:
-                elPhase = phaseOne
-            default:
-                elPhase = phaseZero
-            }
-            elD := app.currEl - app.elPosition // + means move up, - means move down
-            if elPhase == phaseTwo {
-                if elD >= 0 {
-                    err = app.writeCmd(&roboClaw{moveUp, elFast})
-				    if err != nil {
-					    app.moveError(err, "up cmd fast")
-				    }
-                } else {
-                    err = app.writeCmd(&roboClaw{moveDn, elFast})
-				    if err != nil {
-					    app.moveError(err, "down cmd fast")
-				    }
-                }
-            }
-            if elPhase == phaseOne {
-                if elD >= 0 {
-                    err = app.writeCmd(&roboClaw{moveUp, elSlow})
-				    if err != nil {
-					    app.moveError(err, "up cmd slow")
-				    }
-                } else {
-                    err = app.writeCmd(&roboClaw{moveDn, elSlow})
-				    if err != nil {
-					    app.moveError(err, "down cmd slow")
-				    }
-                }
-            }
-            if elPhase == phaseZero {
-                if elD >= 0 {
-                    err = app.writeCmd(&roboClaw{moveUp, 0})
-				    if err != nil {
-					    app.moveError(err, "up cmd stop")
-				    }
-                } else {
-                    err = app.writeCmd(&roboClaw{moveDn, 0})
-				    if err != nil {
-					    app.moveError(err, "Down cmd stop")
-				    }
-                }
-            }
-            app.reSync()
+			el := math.Abs(app.currEl - app.elPosition)
+			switch {
+			case el > near:
+				elPhase = phaseTwo
+			case el > limit:
+				elPhase = phaseOne
+			default:
+				elPhase = phaseZero
+			}
+			elD := app.currEl - app.elPosition // + means move up, - means move down
+			if elPhase == phaseTwo {
+				if elD >= 0 {
+					err = app.writeCmd(&roboClaw{moveUp, elFast})
+					if err != nil {
+						app.moveError(err, "up cmd fast")
+					}
+				} else {
+					err = app.writeCmd(&roboClaw{moveDn, elFast})
+					if err != nil {
+						app.moveError(err, "down cmd fast")
+					}
+				}
+			}
+			if elPhase == phaseOne {
+				if elD >= 0 {
+					err = app.writeCmd(&roboClaw{moveUp, elSlow})
+					if err != nil {
+						app.moveError(err, "up cmd slow")
+					}
+				} else {
+					err = app.writeCmd(&roboClaw{moveDn, elSlow})
+					if err != nil {
+						app.moveError(err, "down cmd slow")
+					}
+				}
+			}
+			if elPhase == phaseZero {
+				if elD >= 0 {
+					err = app.writeCmd(&roboClaw{moveUp, 0})
+					if err != nil {
+						app.moveError(err, "up cmd stop")
+					}
+				} else {
+					err = app.writeCmd(&roboClaw{moveDn, 0})
+					if err != nil {
+						app.moveError(err, "Down cmd stop")
+					}
+				}
+			}
+			app.reSync()
 			time.Sleep(time.Duration(dT) * time.Millisecond)
 		}
 	}()
@@ -208,16 +210,16 @@ func (app *application) setAzPosition() error {
 		}
 		app.moveError(err, "az quad read")
 	}
-    az := float64(azQuad) / azMul
-    switch {
-    case az >= app.maxAz:
-        app.azPosition = app.maxAz
-    case az <= app.minAz:
-        app.azPosition = app.minAz
-    default: 
-	    app.azPosition = az
-    }	
-    return nil
+	az := float64(azQuad) / azMul
+	switch {
+	case az >= app.maxAz:
+		app.azPosition = app.maxAz
+	case az <= app.minAz:
+		app.azPosition = app.minAz
+	default:
+		app.azPosition = az
+	}
+	return nil
 }
 
 func (app *application) setElPosition() error {
@@ -228,14 +230,14 @@ func (app *application) setElPosition() error {
 		}
 		app.moveError(err, "el quad read")
 	}
-    el :=  float64(elQuad) / elMul
-    switch {
-    case el >= app.maxEl:
-        app.elPosition = app.maxEl
-    case el <= app.minEl:
-        app.elPosition = app.minEl
-    default:
-	    app.elPosition = el
-    }	
-    return nil
+	el := float64(elQuad) / elMul
+	switch {
+	case el >= app.maxEl:
+		app.elPosition = app.maxEl
+	case el <= app.minEl:
+		app.elPosition = app.minEl
+	default:
+		app.elPosition = el
+	}
+	return nil
 }

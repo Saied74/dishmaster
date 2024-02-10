@@ -103,7 +103,7 @@ func (app *application) saveMasterData() error {
 	if err != nil {
 		return fmt.Errorf("Err openning master file: %v", err)
 	}
-    defer f.Close()
+	defer f.Close()
 	_, err = f.Write(m)
 	if err != nil {
 		return fmt.Errorf("Err wirting master file: %v", err)
@@ -131,7 +131,7 @@ func (app *application) saveDishData() error {
 	if err != nil {
 		return fmt.Errorf("Err openning dish file: %v", err)
 	}
-    defer f.Close()
+	defer f.Close()
 	_, err = f.Write(m)
 	if err != nil {
 		return fmt.Errorf("Err writing dish file: %v", err)

@@ -272,12 +272,12 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 
 	t = &textWrap{txt: TEXT_TARGET_AZ, txtClr: black, txtBld: false, bgClr: white}
 	currAzLabel := t.makeText()
-    t.txt = TEXT_CURRENT_AZ
-    azPosLabel := t.makeText()
+	t.txt = TEXT_CURRENT_AZ
+	azPosLabel := t.makeText()
 	t.txt = TEXT_TARGET_EL
 	currElLabel := t.makeText()
-    t.txt = TEXT_CURRENT_EL
-    elPosLabel := t.makeText()
+	t.txt = TEXT_CURRENT_EL
+	elPosLabel := t.makeText()
 	row4 := container.New(layout.NewGridLayout(4), currAzLabel, azPosLabel, currElLabel, elPosLabel)
 
 	l = &labelWrap{
@@ -288,17 +288,17 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	}
 	l.bind = app.azBind
 	currAz := l.makeLabel()
-    l.txt = fmt.Sprintf("%5.2f", app.azPosition)
-    l.bind = app.azPosBind
-    azPosition := l.makeLabel()
+	l.txt = fmt.Sprintf("%5.2f", app.azPosition)
+	l.bind = app.azPosBind
+	azPosition := l.makeLabel()
 
 	l.txt = fmt.Sprintf("%5.2f", app.currEl)
 	l.bind = app.elBind
 	currEl := l.makeLabel()
 
-    l.txt = fmt.Sprintf("%5.2f", app.elPosition)
-    l.bind = app.elPosBind
-    elPosition := l.makeLabel()
+	l.txt = fmt.Sprintf("%5.2f", app.elPosition)
+	l.bind = app.elPosBind
+	elPosition := l.makeLabel()
 
 	row5 := container.New(layout.NewGridLayout(4), currAz, azPosition, currEl, elPosition)
 
@@ -311,7 +311,7 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 
 	go func() {
 		for {
-            radThetaA := ((2.0 * math.Pi) * (app.azPosition - 90.0)) / 360.0
+			radThetaA := ((2.0 * math.Pi) * (app.azPosition - 90.0)) / 360.0
 			endXa := innerX*math.Cos(radThetaA) + app.sDa.centerX
 			endYa := innerY*math.Sin(radThetaA) + app.sDa.centerY
 			lp2a := fyne.Position{float32(endXa), float32(endYa)}
@@ -333,7 +333,7 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 
 	go func() {
 		for {
-            radThetaE := ((2.0 * math.Pi) * (360.0 - app.elPosition)) / 360.0
+			radThetaE := ((2.0 * math.Pi) * (360.0 - app.elPosition)) / 360.0
 			endXe := innerX*math.Cos(radThetaE) + app.sDe.centerX
 			endYe := innerY*math.Sin(radThetaE) + app.sDe.centerY
 			le.Position2 = fyne.Position{float32(endXe), float32(endYe)}
@@ -349,7 +349,7 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 
 	row55 := seperator()
 
-    t = &textWrap{txt: TEXT_TARGET_AZ, txtClr: black, txtBld: false, bgClr: white}
+	t = &textWrap{txt: TEXT_TARGET_AZ, txtClr: black, txtBld: false, bgClr: white}
 	targetAzLabel := t.makeText()
 	t.txt = TEXT_TARGET_EL
 	targetElLabel := t.makeText()
@@ -384,15 +384,13 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	b.txt = BUTTON_ADJ_LEFT
 	b.callBack = app.adjustLeft
 	adjLeft := b.makeButton()
-    b.txt = BUTTON_RECALIBRATE
+	b.txt = BUTTON_RECALIBRATE
 	b.callBack = func() {
-        app.recalibrate(targetAz.Text, targetEl.Text)
-    }
+		app.recalibrate(targetAz.Text, targetEl.Text)
+	}
 	reCalib := b.makeButton()
 
 	row8 := container.New(layout.NewGridLayout(6), enterTarget, adjRight, adjLeft, adjUp, adjDn, reCalib)
-
-
 
 	rowN := app.basePage(w)
 	operateGrid := container.NewBorder(nil, rowN, nil, nil, container.New(layout.NewVBoxLayout(),
@@ -578,8 +576,8 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 
 func (app *application) basePage(w fyne.Window) fyne.CanvasObject {
 	var bOper *buttonWrap
-//	var bMan *buttonWrap
-//	var bPoint *buttonWrap
+	//	var bMan *buttonWrap
+	//	var bPoint *buttonWrap
 	var bSet *buttonWrap
 
 	bOper = &buttonWrap{
@@ -588,8 +586,8 @@ func (app *application) basePage(w fyne.Window) fyne.CanvasObject {
 		txtBld: false,
 		bgClr:  opColor(),
 		callBack: func() {
-//			bMan.bgClr = grey
-//			bPoint.bgClr = grey
+			//			bMan.bgClr = grey
+			//			bPoint.bgClr = grey
 			bSet.bgClr = grey
 			state = STATE_OPERATE
 			fmt.Println("Operate")
@@ -600,35 +598,35 @@ func (app *application) basePage(w fyne.Window) fyne.CanvasObject {
 	}
 	operate := bOper.makeButton()
 
-//	bMan = &buttonWrap{
-//		txt:    "Manual",
-//		txtClr: black,
-//		txtBld: false,
-//		bgClr:  manColor(),
-//		callBack: func() {
-//			state = STATE_MANUAL
-//			fmt.Println("Manual")
-//			manualGrid := app.manualPage(w)
-//			w.SetContent(manualGrid)
-//			w.Show()
-//		},
-//	}
-//	manual := bMan.makeButton()
-//
-//	bPoint = &buttonWrap{
-//		txt:    "Calibrate",
-//		txtClr: black,
-//		txtBld: false,
-//		bgClr:  pointColor(),
-//		callBack: func() {
-//			state = STATE_POINT
-//			fmt.Println("Point")
-//			pointGrid := app.pointPage(w)
-//			w.SetContent(pointGrid)
-//			w.Show()
-//		},
-//	}
-//	point := bPoint.makeButton()
+	//	bMan = &buttonWrap{
+	//		txt:    "Manual",
+	//		txtClr: black,
+	//		txtBld: false,
+	//		bgClr:  manColor(),
+	//		callBack: func() {
+	//			state = STATE_MANUAL
+	//			fmt.Println("Manual")
+	//			manualGrid := app.manualPage(w)
+	//			w.SetContent(manualGrid)
+	//			w.Show()
+	//		},
+	//	}
+	//	manual := bMan.makeButton()
+	//
+	//	bPoint = &buttonWrap{
+	//		txt:    "Calibrate",
+	//		txtClr: black,
+	//		txtBld: false,
+	//		bgClr:  pointColor(),
+	//		callBack: func() {
+	//			state = STATE_POINT
+	//			fmt.Println("Point")
+	//			pointGrid := app.pointPage(w)
+	//			w.SetContent(pointGrid)
+	//			w.Show()
+	//		},
+	//	}
+	//	point := bPoint.makeButton()
 
 	bSet = &buttonWrap{
 		txt:    "Set Up",

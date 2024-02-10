@@ -123,12 +123,13 @@ func main() {
 		app.saveDishData()
 	}
 	mode := &serial.Mode{
-		BaudRate: 115200,
+		BaudRate: 460800,
 		Parity:   serial.NoParity,
 		DataBits: 8,
 		StopBits: serial.OneStopBit,
 	}
-	usbPort := "/dev/tty.usbserial-A10L2L39"
+	usbPort := "/dev/tty.usbmodem142101"
+	//usbPort := "/dev/tty.usbserial-A10L2L39"
 	port, err := serial.Open(usbPort, mode) //   tty.usbmodemF412FA9C9C682", mode)
 	if err != nil {
 		log.Printf("failed to open the usb connecttion %s: %v", usbPort, err)
@@ -136,9 +137,24 @@ func main() {
 	if port != nil {
 		port.SetReadTimeout(time.Duration(2) * time.Second)
 		app.port = port
-		azRegister := int32(app.currAz * azPulses)
-		elRegister := int32(app.currEl * elPulses)
 
+		var packetSerial uint16 = 0x0003
+		err = app.setStdConfig(packetSerial)
+		if err != nil {
+			log.Printf("packet serial configuration failed %v", err)
+		}
+		azQPID := &pid{q: 2, p: 1, i: 0, d: 0} //defined in the comms.go file
+		err = app.setVelocityPID(azQPID, "az")
+		if err != nil {
+			log.Printf("setting azimuth pid failed %v", err)
+		}
+		elQPID := &pid{q: 2, p: 1, i: 0, d: 0}
+		err = app.setVelocityPID(elQPID, "el")
+		if err != nil {
+			log.Printf("setting elevation pid failed %v", err)
+		}
+		azRegister := uint32(app.currAz * azPulses)
+		elRegister := uint32(app.currEl * elPulses)
 		err = app.writeQuadRegister(azRegister, "az")
 		if err != nil {
 			log.Printf("Updating Az register failed: %v", err)
