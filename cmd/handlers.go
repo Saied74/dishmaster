@@ -411,6 +411,8 @@ func (app *application) pushedPark() {
 }
 
 func (app *application) pushedStop() {
+	app.currAz = app.azPosition
+	app.currEl = app.elPosition
 	app.state = IDLE
 	app.reSync()
 }

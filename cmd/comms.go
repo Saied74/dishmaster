@@ -7,11 +7,13 @@ import (
 	"time"
 )
 
+// command length
 var cmdLen map[int]int = map[int]int{
-	moveFwd: 5,
-	moveBwd: 5,
-	moveUp:  5,
-	moveDn:  5,
+	moveFwd:   5,
+	moveBwd:   5,
+	moveUp:    5,
+	moveDn:    5,
+	azEncMode: 5,
 }
 
 const (
@@ -23,10 +25,11 @@ const (
 
 // roboClaw command to command byte mapping
 var cmds map[int]byte = map[int]byte{
-	moveFwd: 0,
-	moveBwd: 1,
-	moveUp:  4,
-	moveDn:  5,
+	moveFwd:   0,
+	moveBwd:   1,
+	moveUp:    4,
+	moveDn:    5,
+	azEncMode: 92,
 }
 
 var noReadN = errors.New("readN did not read anything")

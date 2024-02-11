@@ -34,6 +34,7 @@ const (
 	moveBwd
 	moveUp
 	moveDn
+	azEncMode
 	phaseZero
 	phaseOne
 	phaseTwo
@@ -53,18 +54,20 @@ const (
 )
 
 const (
-	moonMoveLimit = 1.0  // for the Sub Lunar // 0.2
-	sunMoveLimit  = 1.0  // for the Sub Lunar // 0.2
-	azMul         = 6.68 //1.67  // for the Sub Lunar // 200.0  //3m dish only
-	elMul         = 6.68 //1.67  // for the Sub Lunar // 200.0  //3m dish only
-	dT            = 500  //milliseconds
-	azFast        = 60.0 //127.0 //ramp velocity up and down steps (out of 127)
-	elFast        = 60.0 //127.0 //fir the sublunar
-	azSlow        = 20.0 //65.0
-	elSlow        = 20.0 //65.0
-	azEndLimit    = 0.21 //degrees of travel needed to stop the motor
+	moonMoveLimit = 0.2   // for the Sub Lunar // 0.2
+	sunMoveLimit  = 0.2   // for the Sub Lunar // 0.2
+	azMul         = 6.68  //1.67  // for the Sub Lunar // 200.0  //3m dish only
+	elMul         = 6.68  //1.67  // for the Sub Lunar // 200.0  //3m dish only
+	dT            = 500   //milliseconds
+	azFast        = 120.0 //ramp velocity up and down steps (out of 127)
+	elFast        = 120.0 //fir the sublunar
+	azSlow        = 30.0  //65.0
+	elSlow        = 30.0  //65.0
+	azEndLimit    = 0.21  //degrees of travel needed to stop the motor
 	elEndLimit    = 0.21
-	near          = 2.0 // for the Sub Lunar //1.0 //distance to be considered on target
+	near          = 0.5    // for the Sub Lunar //1.0 //distance to be considered on target
+	revEnc        = 1 << 6 //see pages 73 and 74 of roboclaw user manual
+	revMot        = 1 << 5
 )
 
 type roboClaw struct {
@@ -73,8 +76,8 @@ type roboClaw struct {
 }
 
 func (app *application) move() {
-	var limit float64 = 0.50 // for the Sub Lunar // 0.2
-	var azPhase, elPhase int = idle, idle
+	var limit float64 = 0.2 // for the Sub Lunar // 0.2
+	var azPhase, elPhase int = phaseZero, phaseZero
 	var err error
 	go func() {
 		for {

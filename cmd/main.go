@@ -143,6 +143,11 @@ func main() {
 		if err != nil {
 			log.Printf("packet serial configuration failed %v", err)
 		}
+		mode := &roboClaw{cmd: azEncMode, value: revMot | revEnc}
+		err = app.writeCmd(mode)
+		if err != nil {
+			log.Printf("reversing az motor failed %v", err)
+		}
 		azQPID := &pid{q: 2, p: 1, i: 0, d: 0} //defined in the comms.go file
 		err = app.setVelocityPID(azQPID, "az")
 		if err != nil {
