@@ -227,21 +227,21 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	sunMoon1 := container.New(layout.NewCenterLayout(), sunMoon)
 	parkSign, err := fyne.LoadResourceFromPath("./assets/park2.jpg")
 	if err != nil {
-		log.Fatalf("Failed to load park sign: %v", err)
+		log.Printf("Failed to load park sign: %v", err)
 	}
 	park := widget.NewButtonWithIcon(BUTTON_PARK, parkSign, func() {
 		app.pushedPark()
 	})
 	trackSign, err := fyne.LoadResourceFromPath("./assets/track2.jpg")
 	if err != nil {
-		log.Fatalf("Failed to load track sign: %v", err)
+		log.Printf("Failed to load track sign: %v", err)
 	}
 	track := widget.NewButtonWithIcon(BUTTON_TRACK, trackSign, func() {
 		app.pushedTrack()
 	})
 	redCircle, err := fyne.LoadResourceFromPath("./assets/red_circle.png")
 	if err != nil {
-		log.Fatalf("Failed to load red circle: %v", err)
+		log.Printf("Failed to load red circle: %v", err)
 	}
 	stop := widget.NewButtonWithIcon(BUTTON_STOP, redCircle, func() {
 		app.pushedStop()

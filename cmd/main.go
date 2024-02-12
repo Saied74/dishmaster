@@ -158,8 +158,8 @@ func main() {
 		if err != nil {
 			log.Printf("setting elevation pid failed %v", err)
 		}
-		azRegister := uint32(app.currAz * azPulses)
-		elRegister := uint32(app.currEl * elPulses)
+		azRegister := uint32(app.currAz / azMul)
+		elRegister := uint32(app.currEl / elMul)
 		err = app.writeQuadRegister(azRegister, "az")
 		if err != nil {
 			log.Printf("Updating Az register failed: %v", err)

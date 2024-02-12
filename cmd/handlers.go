@@ -23,10 +23,10 @@ type controllerTime struct {
 	ut    float64
 }
 
-const (
-	azPulses = azMul //for the sub lunar rotator  200 //for the 3m dish
-	elPulses = elMul //for the sub lunar rotator 200 //for the 3m dish
-)
+//const (
+//	azPulses = azMul //for the sub lunar rotator  200 //for the 3m dish
+//	elPulses = elMul //for the sub lunar rotator 200 //for the 3m dish
+//)
 
 func (app *application) mooner() {
 	go func() {
@@ -572,8 +572,8 @@ func (app *application) recalibrate(azimuth, elevation string) {
 		return
 	}
 
-	azRegister := uint32(az * azPulses)
-	elRegister := uint32(el * elPulses)
+	azRegister := uint32(az / azMul)
+	elRegister := uint32(el / elMul)
 
 	err = app.writeQuadRegister(azRegister, "az")
 	if err != nil {

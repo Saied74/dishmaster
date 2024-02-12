@@ -56,8 +56,8 @@ const (
 const (
 	moonMoveLimit = 0.2   // for the Sub Lunar // 0.2
 	sunMoveLimit  = 0.2   // for the Sub Lunar // 0.2
-	azMul         = 6.68  //1.67  // for the Sub Lunar // 200.0  //3m dish only
-	elMul         = 6.68  //1.67  // for the Sub Lunar // 200.0  //3m dish only
+	azMul         = 0.150 //1.67  // for the Sub Lunar // 200.0  //3m dish only
+	elMul         = 0.150 //1.67  // for the Sub Lunar // 200.0  //3m dish only
 	dT            = 500   //milliseconds
 	azFast        = 120.0 //ramp velocity up and down steps (out of 127)
 	elFast        = 120.0 //fir the sublunar
@@ -213,7 +213,9 @@ func (app *application) setAzPosition() error {
 		}
 		app.moveError(err, "az quad read")
 	}
-	az := float64(azQuad) / azMul
+	//    app.azPosition = float64(int32(azQuad)) / azMul
+
+	az := float64(azQuad) * azMul
 	switch {
 	case az >= app.maxAz:
 		app.azPosition = app.maxAz
@@ -233,7 +235,9 @@ func (app *application) setElPosition() error {
 		}
 		app.moveError(err, "el quad read")
 	}
-	el := float64(elQuad) / elMul
+	//    app.elPosition = float64(int32(elQuad)) / elMul
+
+	el := float64(elQuad) * elMul
 	switch {
 	case el >= app.maxEl:
 		app.elPosition = app.maxEl
