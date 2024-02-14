@@ -43,7 +43,9 @@ func (app *application) mooner() {
 					app.currEl = el
 					fmt.Println(az, el)
 					app.reSync()
-				}
+				} else {
+                    app.state = IDLE
+                }
 				fmt.Printf("Moon Azimuth: %5.2f\tMoon Elevation: %5.2f\n", az, el)
 			case TRACKING_SUN:
 				ct.getTime()
@@ -52,7 +54,9 @@ func (app *application) mooner() {
 					app.currAz = az
 					app.currEl = el
 					app.reSync()
-				}
+				} else {
+                    app.state = IDLE
+                }
 				fmt.Printf("Sun Azimuth: %5.2f\tSun Elevation: %5.2f\n", az, el)
 			case PARKED:
 				app.reSync()

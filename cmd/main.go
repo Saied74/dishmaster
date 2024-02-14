@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2/data/binding"
 
 	"go.bug.st/serial"
+	"go.bug.st/serial/enumerator"
 )
 
 const (
@@ -17,6 +18,7 @@ const (
 	TRACKING_MOON = "trackingMoon"
 	PARKED        = "parked"
 	IDLE          = "idle"
+	basicMicro    = "03EB"
 )
 
 // a button push is needed to cause state to chage based on the selection.
@@ -108,7 +110,8 @@ func main() {
 		sDa:        sDa,
 		sDe:        sDe,
 	}
-	err := app.getMasterData()
+
+    err := app.getMasterData()
 	if err != nil {
 		log.Printf("System failed to initialize master data because: %v\n", err)
 		log.Printf("Initializing the file in the current directory with default data")
@@ -122,53 +125,42 @@ func main() {
 		log.Printf("File name is dish.json")
 		app.saveDishData()
 	}
+
 	mode := &serial.Mode{
 		BaudRate: 460800,
 		Parity:   serial.NoParity,
 		DataBits: 8,
 		StopBits: serial.OneStopBit,
 	}
-	usbPort := "/dev/tty.usbmodem142101"
-	//usbPort := "/dev/tty.usbserial-A10L2L39"
-	port, err := serial.Open(usbPort, mode) //   tty.usbmodemF412FA9C9C682", mode)
-	if err != nil {
-		log.Printf("failed to open the usb connecttion %s: %v", usbPort, err)
-	}
-	if port != nil {
-		port.SetReadTimeout(time.Duration(2) * time.Second)
-		app.port = port
 
-		var packetSerial uint16 = 0x0003
-		err = app.setStdConfig(packetSerial)
-		if err != nil {
-			log.Printf("packet serial configuration failed %v", err)
+	go func() {
+		firstTime := true
+		for {
+			usbPort, err := findPort(basicMicro)
+			if err != nil {
+				if firstTime {
+					log.Printf("port finding error %v", err)
+					firstTime = false
+				}
+				app.port = nil
+				continue
+			}
+			if app.port == nil {
+				port, err := serial.Open(usbPort, mode) //   tty.usbmodemF412FA9C9C682", mode)
+                port.SetReadTimeout(time.Duration(2) * time.Second)
+				if err != nil {
+					log.Printf("failed to open the usb connecttion %s: %v", usbPort, err)
+					continue
+				}
+				app.port = port
+				app.initApp()
+				firstTime = true
+                log.Printf("port %v reopened", usbPort) 
+			}
+			time.Sleep(time.Duration(1) * time.Second)
 		}
-		mode := &roboClaw{cmd: azEncMode, value: revMot | revEnc}
-		err = app.writeCmd(mode)
-		if err != nil {
-			log.Printf("reversing az motor failed %v", err)
-		}
-		azQPID := &pid{q: 2, p: 1, i: 0, d: 0} //defined in the comms.go file
-		err = app.setVelocityPID(azQPID, "az")
-		if err != nil {
-			log.Printf("setting azimuth pid failed %v", err)
-		}
-		elQPID := &pid{q: 2, p: 1, i: 0, d: 0}
-		err = app.setVelocityPID(elQPID, "el")
-		if err != nil {
-			log.Printf("setting elevation pid failed %v", err)
-		}
-		azRegister := uint32(app.currAz / azMul)
-		elRegister := uint32(app.currEl / elMul)
-		err = app.writeQuadRegister(azRegister, "az")
-		if err != nil {
-			log.Printf("Updating Az register failed: %v", err)
-		}
-		err = app.writeQuadRegister(elRegister, "el")
-		if err != nil {
-			log.Printf("Updating El register failed: %v", err)
-		}
-	}
+	}()
+
 	app.azBind.Set(fmt.Sprintf("%5.2f", app.currAz))
 	app.elBind.Set(fmt.Sprintf("%5.2f", app.currEl))
 	app.azPosBind.Set(fmt.Sprintf("%5.2f", app.azPosition))
@@ -194,4 +186,71 @@ func main() {
 	app.mooner()
 	app.move()
 	app.screen()
+
+}
+func findPort(vid string) (port string, err error) {
+	ports, err := enumerator.GetDetailedPortsList()
+	if err != nil {
+		return "", err
+	}
+	if len(ports) == 0 {
+		return "", fmt.Errorf("no ports were found")
+	}
+	for _, port := range ports {
+		if port.IsUSB {
+			if port.VID == vid {
+				return port.Name, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("right usb port not found")
+}
+
+func (app *application) initApp() {
+
+	err := app.getMasterData()
+	if err != nil {
+		log.Printf("System failed to initialize master data because: %v\n", err)
+		log.Printf("Initializing the file in the current directory with default data")
+		log.Printf("File name is master.json")
+		app.saveMasterData()
+	}
+	err = app.getDishData()
+	if err != nil {
+		log.Printf("system failed to initiatlize dish data because: %v", err)
+		log.Printf("Initializing the file in the current directory with default data")
+		log.Printf("File name is dish.json")
+		app.saveDishData()
+	}
+
+	var packetSerial uint16 = 0x0003
+	err = app.setStdConfig(packetSerial)
+	if err != nil {
+		log.Printf("packet serial configuration failed %v", err)
+	}
+	mode := &roboClaw{cmd: azEncMode, value: revMot | revEnc}
+	err = app.writeCmd(mode)
+	if err != nil {
+		log.Printf("reversing az motor failed %v", err)
+	}
+	azQPID := &pid{q: 2, p: 1, i: 0, d: 0} //defined in the comms.go file
+	err = app.setVelocityPID(azQPID, "az")
+	if err != nil {
+		log.Printf("setting azimuth pid failed %v", err)
+	}
+	elQPID := &pid{q: 2, p: 1, i: 0, d: 0}
+	err = app.setVelocityPID(elQPID, "el")
+	if err != nil {
+		log.Printf("setting elevation pid failed %v", err)
+	}
+	azRegister := uint32(app.currAz / azMul)
+	elRegister := uint32(app.currEl / elMul)
+	err = app.writeQuadRegister(azRegister, "az")
+	if err != nil {
+		log.Printf("Updating Az register failed: %v", err)
+	}
+	err = app.writeQuadRegister(elRegister, "el")
+	if err != nil {
+		log.Printf("Updating El register failed: %v", err)
+	}
 }

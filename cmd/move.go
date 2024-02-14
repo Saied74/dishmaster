@@ -58,7 +58,7 @@ const (
 	sunMoveLimit  = 0.2   // for the Sub Lunar // 0.2
 	azMul         = 0.150 //1.67  // for the Sub Lunar // 200.0  //3m dish only
 	elMul         = 0.150 //1.67  // for the Sub Lunar // 200.0  //3m dish only
-	dT            = 500   //milliseconds
+	dT            = 500  //milliseconds
 	azFast        = 120.0 //ramp velocity up and down steps (out of 127)
 	elFast        = 120.0 //fir the sublunar
 	azSlow        = 30.0  //65.0
@@ -192,6 +192,7 @@ func (app *application) move() {
 					}
 				}
 			}
+            app.saveDishData()
 			app.reSync()
 			time.Sleep(time.Duration(dT) * time.Millisecond)
 		}
@@ -213,17 +214,16 @@ func (app *application) setAzPosition() error {
 		}
 		app.moveError(err, "az quad read")
 	}
-	//    app.azPosition = float64(int32(azQuad)) / azMul
-
-	az := float64(azQuad) * azMul
-	switch {
-	case az >= app.maxAz:
-		app.azPosition = app.maxAz
-	case az <= app.minAz:
-		app.azPosition = app.minAz
-	default:
-		app.azPosition = az
-	}
+    app.azPosition = float64(azQuad) * azMul
+//	az := float64(azQuad) * azMul
+//	switch {
+//	case az >= app.maxAz:
+//		app.azPosition = app.maxAz
+//	case az <= app.minAz:
+//		app.azPosition = app.minAz
+//	default:
+//		app.azPosition = az
+//	}
 	return nil
 }
 
@@ -235,16 +235,15 @@ func (app *application) setElPosition() error {
 		}
 		app.moveError(err, "el quad read")
 	}
-	//    app.elPosition = float64(int32(elQuad)) / elMul
-
-	el := float64(elQuad) * elMul
-	switch {
-	case el >= app.maxEl:
-		app.elPosition = app.maxEl
-	case el <= app.minEl:
-		app.elPosition = app.minEl
-	default:
-		app.elPosition = el
-	}
+    app.elPosition = float64(elQuad) * elMul
+//	el := float64(elQuad) * elMul
+//	switch {
+//	case el >= app.maxEl:
+//		app.elPosition = app.maxEl
+//	case el <= app.minEl:
+//		app.elPosition = app.minEl
+//	default:
+//		app.elPosition = el
+//	}
 	return nil
 }

@@ -75,8 +75,8 @@ func (app *application) getDishData() error {
 	}
 	app.currAz = j.CurrAz
 	app.currEl = j.CurrEl
-	app.azPosition = j.CurrAz //j.AzPosition //for debugging ease
-	app.elPosition = j.CurrEl //j.ElPosition
+	app.azPosition = j.AzPosition //for debugging ease
+	app.elPosition = j.ElPosition
 	return nil
 }
 
@@ -136,6 +136,6 @@ func (app *application) saveDishData() error {
 	if err != nil {
 		return fmt.Errorf("Err writing dish file: %v", err)
 	}
-	fmt.Println(j)
+	//fmt.Println(j)
 	return nil
 }
