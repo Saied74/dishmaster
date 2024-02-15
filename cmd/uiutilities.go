@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	EME_TITLE = "EME Dish Controller Version v0.3"
+	EME_TITLE = "EME Dish Controller Version v0.4"
 
 	STATE_OPERATE = "operate"
 	STATE_MANUAL  = "manual"

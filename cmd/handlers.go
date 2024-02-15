@@ -18,6 +18,7 @@ const (
 	absAzMin = 0.0
 	absElMax = 120.0
 	absElMin = -20.0
+	moveInc  = 0.5
 )
 
 type controllerTime struct {
@@ -326,8 +327,8 @@ func (app *application) updateTarget(azimuth, elevation string) {
 }
 
 func (app *application) adjustUp() {
-	tst := app.currEl + 0.5
-	if tst < app.maxEl && tst < 90.0 {
+	tst := app.currEl + moveInc
+	if tst < app.maxEl && tst < absElMax {
 		app.currEl = tst
 		app.reSync()
 		return
@@ -336,8 +337,8 @@ func (app *application) adjustUp() {
 }
 
 func (app *application) adjustDn() {
-	tst := app.currEl - 0.5
-	if tst > app.minEl && tst > 0.0 {
+	tst := app.currEl - moveInc
+	if tst > app.minEl && tst > absElMin {
 		app.currEl = tst
 		app.reSync()
 		return
@@ -346,8 +347,8 @@ func (app *application) adjustDn() {
 }
 
 func (app *application) adjustRight() {
-	tst := app.currAz + 0.5
-	if tst < app.maxAz && tst < 360.0 {
+	tst := app.currAz + moveInc
+	if tst < app.maxAz && tst < absAzMax {
 		app.currAz = tst
 		app.reSync()
 		return
@@ -356,8 +357,8 @@ func (app *application) adjustRight() {
 }
 
 func (app *application) adjustLeft() {
-	tst := app.currAz - 0.5
-	if tst > app.minAz && tst > 0.0 {
+	tst := app.currAz - moveInc
+	if tst > app.minAz && tst > absAzMin {
 		app.currAz = tst
 		app.reSync()
 		return
