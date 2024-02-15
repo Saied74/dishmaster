@@ -112,7 +112,7 @@ func (app *application) writeQuadRegister(c uint32, s string) error {
 	return nil
 }
 
-func (app *application) readQuadRegister(s string) (uint32, error) {
+func (app *application) readQuadRegister(s string) (int32, error) {
 	var r uint32
 	wBuff := make([]byte, 2)
 	rBuff := make([]byte, 7)
@@ -161,7 +161,7 @@ func (app *application) readQuadRegister(s string) (uint32, error) {
 	r = r | uint32(rBuff[2])<<8
 	r = r | uint32(rBuff[3])
 
-	return r, nil
+	return int32(r), nil
 }
 
 type pid struct {

@@ -58,6 +58,12 @@ var (
 
 var state string = STATE_OPERATE
 
+const (
+    windowWidth = 430
+    windowHeight  = 515
+
+)
+
 func (app *application) screen() {
 	var row4 fyne.CanvasObject
 
@@ -68,7 +74,7 @@ func (app *application) screen() {
 	row4 = app.operatePage(w)
 
 	w.SetContent(row4)
-	w.Resize(fyne.NewSize(850, 700))
+	w.Resize(fyne.NewSize(windowWidth, windowHeight)) //850, 700))
 
 	w.Show()
 
@@ -270,15 +276,31 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	opMode := l.makeLabel()
 	row3 := container.New(layout.NewGridLayout(1), opMode)
 
-	t = &textWrap{txt: TEXT_TARGET_AZ, txtClr: black, txtBld: false, bgClr: white}
+	//var smallText float32 = 12.0
+
+	t = &textWrap{txt: "Target", txtClr: black, txtBld: false, bgClr: white}
 	currAzLabel := t.makeText()
-	t.txt = TEXT_CURRENT_AZ
-	azPosLabel := t.makeText()
-	t.txt = TEXT_TARGET_EL
-	currElLabel := t.makeText()
-	t.txt = TEXT_CURRENT_EL
-	elPosLabel := t.makeText()
-	row4 := container.New(layout.NewGridLayout(4), currAzLabel, azPosLabel, currElLabel, elPosLabel)
+	//currAzLabel.TextSize = smallText
+	t.txt = "Current"          //TEXT_CURRENT_AZ
+	azPosLabel := t.makeText() //canvas.NewText(t.txt, t.txtClr)
+	//azPosLabel.TextSize = smallText
+	t.txt = "Difference"        //TEXT_TARGET_EL
+	currElLabel := t.makeText() //canvas.NewText(t.txt, t.txtClr)
+	//currElLabel.TextSize = smallText
+
+	t.txt = ""
+	blank := t.makeText() //canvas.NewText(t.txt, t.txtClr)
+	//blank.TextSize = smallText
+
+	row4 := container.New(layout.NewGridLayout(4), blank, currAzLabel, azPosLabel, currElLabel) //, elPosLabel)
+
+	t.txt = "Azimuth"
+	azRowLabel := t.makeText() //canvas.NewText(t.txt, t.txtClr)
+	//azRowLabel.TextSize = smallText
+
+	t.txt = "Elevation"
+	elRowLabel := t.makeText() //canvas.NewText(t.txt, t.txtClr)
+	// elRowLabel.TextSize = smallText
 
 	l = &labelWrap{
 		txt:    fmt.Sprintf("%5.2f", app.currAz),
@@ -288,9 +310,14 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	}
 	l.bind = app.azBind
 	currAz := l.makeLabel()
+
 	l.txt = fmt.Sprintf("%5.2f", app.azPosition)
 	l.bind = app.azPosBind
 	azPosition := l.makeLabel()
+
+	l.txt = fmt.Sprintf("%5.2f", app.currAz-app.azPosition)
+	l.bind = app.azDiffBind
+	azDiff := l.makeLabel()
 
 	l.txt = fmt.Sprintf("%5.2f", app.currEl)
 	l.bind = app.elBind
@@ -300,7 +327,12 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	l.bind = app.elPosBind
 	elPosition := l.makeLabel()
 
-	row5 := container.New(layout.NewGridLayout(4), currAz, azPosition, currEl, elPosition)
+	l.txt = fmt.Sprintf("%5.2f", app.currEl-app.elPosition)
+	l.bind = app.elDiffBind
+	elDiff := l.makeLabel()
+
+	row5 := container.New(layout.NewGridLayout(4), azRowLabel, currAz, azPosition, azDiff)
+	row51 := container.New(layout.NewGridLayout(4), elRowLabel, currEl, elPosition, elDiff)
 
 	hashMarksa := app.makeScale("az")
 
@@ -349,18 +381,78 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 
 	row55 := seperator()
 
+	//	t = &textWrap{txt: TEXT_TARGET_AZ, txtClr: black, txtBld: false, bgClr: white}
+	//	targetAzLabel := t.makeText()
+	//	t.txt = TEXT_TARGET_EL
+	//	targetElLabel := t.makeText()
+	//
+	//	row6 := container.New(layout.NewGridLayout(2), targetAzLabel, targetElLabel)
+	//
+	//	targetAz := widget.NewEntry()
+	//	targetAz.SetPlaceHolder(ENTER_TARGET_AZ)
+	//	targetEl := widget.NewEntry()
+	//	targetEl.SetPlaceHolder(ENTER_TARGET_EL)
+	//	row7 := container.New(layout.NewGridLayout(2), targetAz, targetEl)
+	//
+	//	b := &buttonWrap{
+	//		txt:    BUTTON_UPDATE_TARGET,
+	//		txtClr: black,
+	//		txtBld: false,
+	//		bgClr:  white,
+	//		callBack: func() {
+	//			app.updateTarget(targetAz.Text, targetEl.Text)
+	//		},
+	//	}
+	//	enterTarget := b.makeButton()
+	//	b.txt = BUTTON_ADJ_UP
+	//	b.callBack = app.adjustUp
+	//	adjUp := b.makeButton()
+	//	b.txt = BUTTON_ADJ_DN
+	//	b.callBack = app.adjustDn
+	//	adjDn := b.makeButton()
+	//	b.txt = BUTTON_ADJ_RIGHT
+	//	b.callBack = app.adjustRight
+	//	adjRight := b.makeButton()
+	//	b.txt = BUTTON_ADJ_LEFT
+	//	b.callBack = app.adjustLeft
+	//	adjLeft := b.makeButton()
+	//	b.txt = BUTTON_RECALIBRATE
+	//	b.callBack = func() {
+	//		app.recalibrate(targetAz.Text, targetEl.Text)
+	//	}
+	//	reCalib := b.makeButton()
+	//
+	//	row8 := container.New(layout.NewGridLayout(6), enterTarget, adjRight, adjLeft, adjUp, adjDn, reCalib)
+
+	rowN := app.basePage(w)
+	operateGrid := container.NewBorder(nil, rowN, nil, nil, container.New(layout.NewVBoxLayout(),
+		row0, row1, row15, row3, row4, row5, row51, row55, row54)) //took out rows 6, 7, and 8
+	return operateGrid
+}
+
+func (app *application) pointPage(w fyne.Window) fyne.CanvasObject {
+
+	t := &textWrap{
+		txt:     TITLE_POINT,
+		txtClr:  white,
+		txtSize: SIZE_PAGE_TITLE,
+		txtBld:  true,
+		bgClr:   purple,
+	}
+	row0 := t.makeText()
+
 	t = &textWrap{txt: TEXT_TARGET_AZ, txtClr: black, txtBld: false, bgClr: white}
 	targetAzLabel := t.makeText()
 	t.txt = TEXT_TARGET_EL
 	targetElLabel := t.makeText()
 
-	row6 := container.New(layout.NewGridLayout(2), targetAzLabel, targetElLabel)
+	row1 := container.New(layout.NewGridLayout(2), targetAzLabel, targetElLabel)
 
 	targetAz := widget.NewEntry()
 	targetAz.SetPlaceHolder(ENTER_TARGET_AZ)
 	targetEl := widget.NewEntry()
 	targetEl.SetPlaceHolder(ENTER_TARGET_EL)
-	row7 := container.New(layout.NewGridLayout(2), targetAz, targetEl)
+	row2 := container.New(layout.NewGridLayout(2), targetAz, targetEl)
 
 	b := &buttonWrap{
 		txt:    BUTTON_UPDATE_TARGET,
@@ -372,6 +464,35 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 		},
 	}
 	enterTarget := b.makeButton()
+	row3 := container.New(layout.NewGridLayout(1), enterTarget)
+
+	row35 := seperator()
+
+	t.txt = TEXT_ADJ_SIZE
+	adj := t.makeText()
+	row36 := container.New(layout.NewGridLayout(1), adj)
+
+	t.txt = TEXT_CURR_AZ
+	currAzLabel := t.makeText()
+	t.txt = TEXT_CURR_EL
+	currElLabel := t.makeText()
+
+	row4 := container.New(layout.NewGridLayout(2), currAzLabel, currElLabel)
+
+	l := &labelWrap{
+		txt:    fmt.Sprintf("%5.2f", app.currAz),
+		txtClr: black,
+		txtBld: false,
+		bgClr:  white,
+	}
+	l.bind = app.azBind
+	currAz := l.makeLabel()
+
+	l.txt = fmt.Sprintf("%5.2f", app.currEl)
+	l.bind = app.elBind
+	currEl := l.makeLabel()
+	row5 := container.New(layout.NewGridLayout(2), currAz, currEl)
+
 	b.txt = BUTTON_ADJ_UP
 	b.callBack = app.adjustUp
 	adjUp := b.makeButton()
@@ -384,110 +505,25 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	b.txt = BUTTON_ADJ_LEFT
 	b.callBack = app.adjustLeft
 	adjLeft := b.makeButton()
+	row6 := container.New(layout.NewGridLayout(4), adjRight, adjLeft, adjUp, adjDn)
+
 	b.txt = BUTTON_RECALIBRATE
 	b.callBack = func() {
 		app.recalibrate(targetAz.Text, targetEl.Text)
 	}
-	reCalib := b.makeButton()
 
-	row8 := container.New(layout.NewGridLayout(6), enterTarget, adjRight, adjLeft, adjUp, adjDn, reCalib)
+	reCalib := b.makeButton()
+	row7 := container.New(layout.NewGridLayout(1), reCalib)
+
+	row75 := seperator()
 
 	rowN := app.basePage(w)
-	operateGrid := container.NewBorder(nil, rowN, nil, nil, container.New(layout.NewVBoxLayout(),
-		row0, row1, row15, row3, row4, row5, row6, row7, row8, row55, row54))
-	return operateGrid
+	setupGrid := container.NewBorder(nil, rowN, nil, nil, container.New(layout.NewVBoxLayout(),
+		row0, row1, row2, row3, row35, row36, row4, row5, row6, row7, row75))
+	return setupGrid
+
 }
 
-//func (app *application) pointPage(w fyne.Window) fyne.CanvasObject {
-//
-//	t := &textWrap{
-//		txt:     TITLE_POINT,
-//		txtClr:  white,
-//		txtSize: SIZE_PAGE_TITLE,
-//		txtBld:  true,
-//		bgClr:   purple,
-//	}
-//	row0 := t.makeText()
-//
-//	t = &textWrap{txt: TEXT_TARGET_AZ, txtClr: black, txtBld: false, bgClr: white}
-//	targetAzLabel := t.makeText()
-//	t.txt = TEXT_TARGET_EL
-//	targetElLabel := t.makeText()
-//
-//	row1 := container.New(layout.NewGridLayout(2), targetAzLabel, targetElLabel)
-//
-//	targetAz := widget.NewEntry()
-//	targetAz.SetPlaceHolder(ENTER_TARGET_AZ)
-//	targetEl := widget.NewEntry()
-//	targetEl.SetPlaceHolder(ENTER_TARGET_EL)
-//	row2 := container.New(layout.NewGridLayout(2), targetAz, targetEl)
-//
-//	b := &buttonWrap{
-//		txt:    BUTTON_UPDATE_TARGET,
-//		txtClr: black,
-//		txtBld: false,
-//		bgClr:  white,
-//		callBack: func() {
-//			app.updateTarget(targetAz.Text, targetEl.Text)
-//		},
-//	}
-//	enterTarget := b.makeButton()
-//	row3 := container.New(layout.NewGridLayout(1), enterTarget)
-//
-//	row35 := seperator()
-//
-//	t.txt = TEXT_ADJ_SIZE
-//	adj := t.makeText()
-//	row36 := container.New(layout.NewGridLayout(1), adj)
-//
-//	t.txt = TEXT_CURR_AZ
-//	currAzLabel := t.makeText()
-//	t.txt = TEXT_CURR_EL
-//	currElLabel := t.makeText()
-//
-//	row4 := container.New(layout.NewGridLayout(2), currAzLabel, currElLabel)
-//
-//	l := &labelWrap{
-//		txt:    fmt.Sprintf("%5.2f", app.currAz),
-//		txtClr: black,
-//		txtBld: false,
-//		bgClr:  white,
-//	}
-//	l.bind = app.azBind
-//	currAz := l.makeLabel()
-//
-//	l.txt = fmt.Sprintf("%5.2f", app.currEl)
-//	l.bind = app.elBind
-//	currEl := l.makeLabel()
-//	row5 := container.New(layout.NewGridLayout(2), currAz, currEl)
-//
-//	b.txt = BUTTON_ADJ_UP
-//	b.callBack = app.adjustUp
-//	adjUp := b.makeButton()
-//	b.txt = BUTTON_ADJ_DN
-//	b.callBack = app.adjustDn
-//	adjDn := b.makeButton()
-//	b.txt = BUTTON_ADJ_RIGHT
-//	b.callBack = app.adjustRight
-//	adjRight := b.makeButton()
-//	b.txt = BUTTON_ADJ_LEFT
-//	b.callBack = app.adjustLeft
-//	adjLeft := b.makeButton()
-//	row6 := container.New(layout.NewGridLayout(4), adjRight, adjLeft, adjUp, adjDn)
-//
-//	b.txt = BUTTON_RECALIBRATE
-//	b.callBack = app.recalibrate
-//	reCalib := b.makeButton()
-//	row7 := container.New(layout.NewGridLayout(1), reCalib)
-//
-//	row75 := seperator()
-//
-//	rowN := app.basePage(w)
-//	setupGrid := container.NewBorder(nil, rowN, nil, nil, container.New(layout.NewVBoxLayout(),
-//		row0, row1, row2, row3, row35, row36, row4, row5, row6, row7, row75))
-//	return setupGrid
-//
-//}
 //
 //func (app *application) manualPage(w fyne.Window) fyne.CanvasObject {
 //
@@ -577,7 +613,7 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 func (app *application) basePage(w fyne.Window) fyne.CanvasObject {
 	var bOper *buttonWrap
 	//	var bMan *buttonWrap
-	//	var bPoint *buttonWrap
+	var bPoint *buttonWrap
 	var bSet *buttonWrap
 
 	bOper = &buttonWrap{
@@ -593,6 +629,7 @@ func (app *application) basePage(w fyne.Window) fyne.CanvasObject {
 			fmt.Println("Operate")
 			operateGrid := app.operatePage(w)
 			w.SetContent(operateGrid)
+			w.Resize(fyne.NewSize(windowWidth, windowHeight)) //850, 700))
 			w.Show()
 		},
 	}
@@ -613,20 +650,20 @@ func (app *application) basePage(w fyne.Window) fyne.CanvasObject {
 	//	}
 	//	manual := bMan.makeButton()
 	//
-	//	bPoint = &buttonWrap{
-	//		txt:    "Calibrate",
-	//		txtClr: black,
-	//		txtBld: false,
-	//		bgClr:  pointColor(),
-	//		callBack: func() {
-	//			state = STATE_POINT
-	//			fmt.Println("Point")
-	//			pointGrid := app.pointPage(w)
-	//			w.SetContent(pointGrid)
-	//			w.Show()
-	//		},
-	//	}
-	//	point := bPoint.makeButton()
+	bPoint = &buttonWrap{
+		txt:    "Calibrate",
+		txtClr: black,
+		txtBld: false,
+		bgClr:  pointColor(),
+		callBack: func() {
+			state = STATE_POINT
+			fmt.Println("Point")
+			pointGrid := app.pointPage(w)
+			w.SetContent(pointGrid)
+			w.Show()
+		},
+	}
+	point := bPoint.makeButton()
 
 	bSet = &buttonWrap{
 		txt:    "Set Up",
@@ -643,7 +680,7 @@ func (app *application) basePage(w fyne.Window) fyne.CanvasObject {
 	}
 	setup := bSet.makeButton()
 
-	row4 := container.New(layout.NewGridLayout(2), operate, setup) //manual, point, setup)
+	row4 := container.New(layout.NewGridLayout(3), operate, point, setup) //manual, point, setup)
 	row4 = colorize(row4, black)
 	fmt.Println("State: ", state)
 	return row4

@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	EME_TITLE = "EME Dish Controller"
+	EME_TITLE = "EME Dish Controller Version v0.3"
 
 	STATE_OPERATE = "operate"
 	STATE_MANUAL  = "manual"
@@ -88,16 +88,16 @@ const (
 )
 
 const (
-	centerX   = 400.0 //center of the scale geometry
-	centerY   = 250.0
-	innerX    = 100.0 //140.0 //hashmark start point from the center
-	innerY    = 100.0 //140.0
-	outerX    = 110.0 //150.0 //hasmark end point from the center
-	outerY    = 110.0 //150.0
-	txtRadX   = 140.0 //180.0 //text distance from the center
-	txtRadY   = 140.0 //180.0
-	limitRadX = 160.0 //205.0 //for the upper and lower limit labels
-	limitRadY = 160.0 //205.0
+	//	centerX   = 400.0 //center of the scale geometry
+	//	centerY   = 250.0
+	innerX    = 75.0  //100.0 //140.0 //hashmark start point from the center
+	innerY    = 75.0  //100.0 //140.0
+	outerX    = 82.0  //110.0 //150.0 //hasmark end point from the center
+	outerY    = 82.0  //110.0 //150.0
+	txtRadX   = 105.0 //140.0 //180.0 //text distance from the center
+	txtRadY   = 105.0 //140.0 //180.0
+	limitRadX = 120.0 //160.0 //205.0 //for the upper and lower limit labels
+	limitRadY = 120.0 //160.0 //205.0
 )
 
 type scaleData struct {
@@ -157,6 +157,7 @@ func (l *labelWrap) makeLabel() *fyne.Container {
 	}
 	label := widget.NewLabelWithData(l.bind)
 	label.TextStyle.Bold = l.txtBld
+	label.Resize(fyne.Size{3.0, 3.0})
 	con := container.New(layout.NewCenterLayout(), label)
 	return container.New(layout.NewMaxLayout(), bg, con)
 }
@@ -231,6 +232,7 @@ func (app *application) makeScale(azel string) []fyne.CanvasObject {
 	var inc float64
 	hashMarks := []fyne.CanvasObject{}
 	sD := scaleData{}
+	var smallText float32 = 10.0
 
 	switch azel {
 	case "az":
@@ -240,7 +242,7 @@ func (app *application) makeScale(azel string) []fyne.CanvasObject {
 		sD.upperLimit = sD.ul - 90.0
 		sD.centerX = app.sDa.centerX
 		sD.centerY = app.sDa.centerY
-		inc = 10.0
+		inc = 10.0 //azimuth rotates clockwise
 	case "el":
 		sD.ll = app.minEl
 		sD.ul = app.maxEl
@@ -248,7 +250,7 @@ func (app *application) makeScale(azel string) []fyne.CanvasObject {
 		sD.lowerLimit = 360.0 - sD.ll
 		sD.centerX = app.sDe.centerX
 		sD.centerY = app.sDe.centerY
-		inc = -10.0
+		inc = -10.0 //elevation rotates counterclockwise
 	}
 
 	//locate the first hash mark at the lowerLimit
@@ -270,6 +272,7 @@ func (app *application) makeScale(azel string) []fyne.CanvasObject {
 	txtX = limitRadX*cA + sD.centerX + ll
 	txtY = limitRadY*sA + sD.centerY + ul
 	txt = canvas.NewText(fmt.Sprintf("%4.0f", sD.ll), color.Black)
+	txt.TextSize = smallText
 	txt.Move(fyne.Position{float32(txtX), float32(txtY)})
 	txt.TextStyle.Bold = true //just for the limit labels
 	hashMarks = append(hashMarks, txt)
@@ -315,7 +318,7 @@ func (app *application) makeScale(azel string) []fyne.CanvasObject {
 		default:
 			log.Printf("program bug, did not ask for az or el, asked for %s", azel)
 		}
-
+		txt.TextSize = smallText
 		txt.Move(fyne.Position{float32(txtX), float32(txtY)})
 		hashMarks = append(hashMarks, txt)
 		ln := canvas.NewLine(red)
@@ -350,6 +353,7 @@ func (app *application) makeScale(azel string) []fyne.CanvasObject {
 	default:
 		log.Printf("program bug, did not ask for az or el, asked for %s", azel)
 	}
+	txt.TextSize = smallText
 	txt.Move(fyne.Position{float32(txtX), float32(txtY)})
 	txt.TextStyle.Bold = true
 	hashMarks = append(hashMarks, txt)

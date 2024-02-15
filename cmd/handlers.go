@@ -13,6 +13,13 @@ import (
 	"fyne.io/fyne/v2/layout"
 )
 
+const (
+	absAzMax = 360.0
+	absAzMin = 0.0
+	absElMax = 120.0
+	absElMin = -20.0
+)
+
 type controllerTime struct {
 	year  int
 	month int
@@ -44,8 +51,8 @@ func (app *application) mooner() {
 					fmt.Println(az, el)
 					app.reSync()
 				} else {
-                    app.state = IDLE
-                }
+					app.state = IDLE
+				}
 				fmt.Printf("Moon Azimuth: %5.2f\tMoon Elevation: %5.2f\n", az, el)
 			case TRACKING_SUN:
 				ct.getTime()
@@ -55,8 +62,8 @@ func (app *application) mooner() {
 					app.currEl = el
 					app.reSync()
 				} else {
-                    app.state = IDLE
-                }
+					app.state = IDLE
+				}
 				fmt.Printf("Sun Azimuth: %5.2f\tSun Elevation: %5.2f\n", az, el)
 			case PARKED:
 				app.reSync()
@@ -104,23 +111,23 @@ func (app *application) updatePark(azimuth, elevation string) {
 		app.handleError(msg)
 		return
 	}
-	if az < 0.0 {
-		msg = fmt.Sprintf("Park azimuth cannot be less than 0, you entered \"%s\" try again", azimuth)
+	if az < absAzMin {
+		msg = fmt.Sprintf("Park azimuth cannot be less than %5.2f, you entered \"%s\" try again", absAzMin, azimuth)
 		app.handleError(msg)
 		return
 	}
-	if az > 360.0 {
-		msg = fmt.Sprintf("Park azimuth cannot be more than 360, you entered \"%s\" try again", azimuth)
+	if az > absAzMax {
+		msg = fmt.Sprintf("Park azimuth cannot be more than %5.2f, you entered \"%s\" try again", absAzMax, azimuth)
 		app.handleError(msg)
 		return
 	}
 	if az > app.maxAz {
-		msg = fmt.Sprintf("Park azimuth cannot be larger than max azimuth \"%s\" try again", azimuth)
+		msg = fmt.Sprintf("Park azimuth cannot be larger than max azimuth of %5.2f, you entered \"%s\" try again", app.maxAz, azimuth)
 		app.handleError(msg)
 		return
 	}
 	if az < app.minAz {
-		msg = fmt.Sprintf("Park azimuth cannot be smaller than min azimuth \"%s\" try again", azimuth)
+		msg = fmt.Sprintf("Park azimuth cannot be smaller than min azimuth of %5.2f, you entered \"%s\" try again", app.minAz, azimuth)
 		app.handleError(msg)
 		return
 	}
@@ -130,23 +137,23 @@ func (app *application) updatePark(azimuth, elevation string) {
 		app.handleError(msg)
 		return
 	}
-	if el < 0.0 {
-		msg = fmt.Sprintf("Park elevation cannot be less than 0, you entered \"%s\" try again", elevation)
+	if el < absElMin {
+		msg = fmt.Sprintf("Park elevation cannot be less than %5.2f, you entered \"%s\" try again", absElMin, elevation)
 		app.handleError(msg)
 		return
 	}
-	if el > 90.0 {
-		msg = fmt.Sprintf("Park elevation cannot be more than 90, you entered \"%s\" try again", elevation)
+	if el > absElMax {
+		msg = fmt.Sprintf("Park elevation cannot be more than %5.2f, you entered \"%s\" try again", absElMax, elevation)
 		app.handleError(msg)
 		return
 	}
 	if el > app.maxEl {
-		msg = fmt.Sprintf("Park elevation cannot be larger than max elevation \"%s\" try again", elevation)
+		msg = fmt.Sprintf("Park elevation cannot be larger than max elevation of %5.2, you entered \"%s\" try again", app.maxEl, elevation)
 		app.handleError(msg)
 		return
 	}
 	if el < app.minEl {
-		msg = fmt.Sprintf("Park elevation cannot be smaller than min elevation \"%s\" try again", elevation)
+		msg = fmt.Sprintf("Park elevation cannot be smaller than min elevation of %5.2f, you entered \"%s\" try again", app.minEl, elevation)
 		app.handleError(msg)
 		return
 	}
@@ -168,13 +175,13 @@ func (app *application) updateMinMax(minAz, maxAz, minEl, maxEl string) {
 		app.handleError(msg)
 		return
 	}
-	if mina < 0.0 {
-		msg = fmt.Sprintf("Min. Az. cannot be less than 0, you entered \"%s\" try again", minAz)
+	if mina < absAzMin {
+		msg = fmt.Sprintf("Min. Az. cannot be less than %5.2f, you entered \"%s\" try again", absAzMin, minAz)
 		app.handleError(msg)
 		return
 	}
-	if mina > 360.0 {
-		msg = fmt.Sprintf("Min. Az. cannot be more than 360, you entered \"%s\" try again", minAz)
+	if mina > absAzMax {
+		msg = fmt.Sprintf("Min. Az. cannot be more than %5.2f, you entered \"%s\" try again", absAzMax, minAz)
 		app.handleError(msg)
 		return
 	}
@@ -185,13 +192,13 @@ func (app *application) updateMinMax(minAz, maxAz, minEl, maxEl string) {
 		return
 	}
 
-	if maxa < 0.0 {
-		msg = fmt.Sprintf("Max. Az. cannot be less than 0, you entered \"%s\" try again", maxAz)
+	if maxa < absAzMin {
+		msg = fmt.Sprintf("Max. Az. cannot be less than %5.2f, you entered \"%s\" try again", absAzMin, maxAz)
 		app.handleError(msg)
 		return
 	}
-	if maxa > 360.0 {
-		msg = fmt.Sprintf("Max. Az. cannot be more than 360, you entered \"%s\" try again", maxAz)
+	if maxa > absAzMax {
+		msg = fmt.Sprintf("Max. Az. cannot be more than %5.2f, you entered \"%s\" try again", absAzMax, maxAz)
 		app.handleError(msg)
 		return
 	}
@@ -202,13 +209,13 @@ func (app *application) updateMinMax(minAz, maxAz, minEl, maxEl string) {
 		app.handleError(msg)
 		return
 	}
-	if mine < 0.0 {
-		msg = fmt.Sprintf("Min El. cannot be less than 0, you entered \"%s\" try again", minEl)
+	if mine < absElMin {
+		msg = fmt.Sprintf("Min El. cannot be less than %5.2f, you entered \"%s\" try again", absElMin, minEl)
 		app.handleError(msg)
 		return
 	}
-	if mine > 90.0 {
-		msg = fmt.Sprintf("Min. El. cannot be more than 90, you entered \"%s\" try again", minEl)
+	if mine > absElMax {
+		msg = fmt.Sprintf("Min. El. cannot be more than %5.2f, you entered \"%s\" try again", absElMax, minEl)
 		app.handleError(msg)
 		return
 	}
@@ -219,13 +226,13 @@ func (app *application) updateMinMax(minAz, maxAz, minEl, maxEl string) {
 		app.handleError(msg)
 		return
 	}
-	if maxe < 0.0 {
-		msg = fmt.Sprintf("Max. El. cannot be less than 0, you entered \"%s\" try again", maxEl)
+	if maxe < absElMin {
+		msg = fmt.Sprintf("Max. El. cannot be less than %5.2f, you entered \"%s\" try again", absElMin, maxEl)
 		app.handleError(msg)
 		return
 	}
-	if maxe > 90.0 {
-		msg = fmt.Sprintf("Max. El. cannot be more than 90, you entered \"%s\" try again", maxEl)
+	if maxe > absElMax {
+		msg = fmt.Sprintf("Max. El. cannot be more than %5.2f, you entered \"%s\" try again", absElMax, maxEl)
 		app.handleError(msg)
 		return
 	}
@@ -262,23 +269,23 @@ func (app *application) updateTarget(azimuth, elevation string) {
 		app.handleError(msg)
 		return
 	}
-	if az < 0.0 {
-		msg = fmt.Sprintf("Target Az. cannot be less than 0, you entered \"%s\" try again", azimuth)
+	if az < absAzMin {
+		msg = fmt.Sprintf("Target Az. cannot be less than %5.2f, you entered \"%s\" try again", absAzMin, azimuth)
 		app.handleError(msg)
 		return
 	}
-	if az > 360.0 {
-		msg = fmt.Sprintf("Target Az. cannot be more than 360, you entered \"%s\" try again", azimuth)
+	if az > absAzMax {
+		msg = fmt.Sprintf("Target Az. cannot be more than %5.2f, you entered \"%s\" try again", absAzMax, azimuth)
 		app.handleError(msg)
 		return
 	}
 	if az > app.maxAz {
-		msg = fmt.Sprintf("Target Az cannot be larger than max Az, you entered \"%s\", try again", azimuth)
+		msg = fmt.Sprintf("Target Az cannot be larger than maxAz of %5.2f, you entered \"%s\", try again", app.maxAz, azimuth)
 		app.handleError(msg)
 		return
 	}
 	if az < app.minAz {
-		msg = fmt.Sprintf("Target Az cannot be smaller than min Az, you entered \"%s\", try again", azimuth)
+		msg = fmt.Sprintf("Target Az cannot be smaller than minAz of %5.2f, you entered \"%s\", try again", app.minAz, azimuth)
 		app.handleError(msg)
 		return
 	}
@@ -289,23 +296,23 @@ func (app *application) updateTarget(azimuth, elevation string) {
 		app.handleError(msg)
 		return
 	}
-	if el < 0.0 {
-		msg = fmt.Sprintf("Target El. cannot be less than 0, you entered \"%s\" try again", elevation)
+	if el < absElMin {
+		msg = fmt.Sprintf("Target El. cannot be less than %5.2f, you entered \"%s\" try again", absElMin, elevation)
 		app.handleError(msg)
 		return
 	}
-	if el > 90.0 {
-		msg = fmt.Sprintf("Target El cannot be more than 90, you entered \"%s\" try again", elevation)
+	if el > absElMax {
+		msg = fmt.Sprintf("Target El cannot be more than %5.2f, you entered \"%s\" try again", absElMax, elevation)
 		app.handleError(msg)
 		return
 	}
 	if el > app.maxEl {
-		msg = fmt.Sprintf("Target El cannot be more than max El, you entered \"%s\" try again", elevation)
+		msg = fmt.Sprintf("Target El cannot be more than maxEl of %5.2f, you entered \"%s\" try again", app.maxEl, elevation)
 		app.handleError(msg)
 		return
 	}
 	if el < app.minEl {
-		msg = fmt.Sprintf("Target El cannot be less than min El, you entered \"%^s\", try again", elevation)
+		msg = fmt.Sprintf("Target El cannot be less than minEl of %5.2f, you entered \"%^s\", try again", app.minEl, elevation)
 		app.handleError(msg)
 		return
 	}
@@ -478,6 +485,14 @@ func (app *application) reSync() {
 	if err != nil {
 		log.Fatal("resync datta failed in elPosition")
 	}
+    err = app.azDiffBind.Set(fmt.Sprintf("%5.2f", app.currAz - app.azPosition))
+	if err != nil {
+		log.Fatal("resync datta failed in azDiff")
+	}
+    err = app.elDiffBind.Set(fmt.Sprintf("%5.2f", app.currEl - app.elPosition))
+	if err != nil {
+		log.Fatal("resync datta failed in elEiff")
+	}
 	err = app.gridBind.Set(fmt.Sprintf("%s%s", TEXT_GRID_VALUE, app.grid))
 	if err != nil {
 		log.Fatal("resync data failed in grid: ", err)
@@ -528,12 +543,12 @@ func (app *application) recalibrate(azimuth, elevation string) {
 		app.handleError(msg)
 		return
 	}
-	if az < 0.0 {
+	if az < absAzMin {
 		msg = fmt.Sprintf("Target Az. cannot be less than 0, you entered \"%s\" try again", azimuth)
 		app.handleError(msg)
 		return
 	}
-	if az > 360.0 {
+	if az > absAzMax {
 		msg = fmt.Sprintf("Target Az. cannot be more than 360, you entered \"%s\" try again", azimuth)
 		app.handleError(msg)
 		return
@@ -555,12 +570,12 @@ func (app *application) recalibrate(azimuth, elevation string) {
 		app.handleError(msg)
 		return
 	}
-	if el < 0.0 {
+	if el < absElMin {
 		msg = fmt.Sprintf("Target El. cannot be less than 0, you entered \"%s\" try again", elevation)
 		app.handleError(msg)
 		return
 	}
-	if el > 90.0 {
+	if el > absElMax {
 		msg = fmt.Sprintf("Target El cannot be more than 90, you entered \"%s\" try again", elevation)
 		app.handleError(msg)
 		return

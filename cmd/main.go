@@ -46,6 +46,8 @@ type application struct {
 	elBind     binding.String
 	azPosBind  binding.String
 	elPosBind  binding.String
+	azDiffBind binding.String
+	elDiffBind binding.String
 	gridBind   binding.String
 	parkAzBind binding.String
 	parkElBind binding.String
@@ -64,15 +66,15 @@ func main() {
 	dishPath := filepath.Join(dataPath, "dish.json")
 
 	sDa := &scaleData{
-		centerX: 250.0,
-		centerY: 180.0, //250.0,
-		endX:    200.0,
-		endY:    100.0,
+		centerX: 125.0, //250.0,
+		centerY: 105.0, //180.0, //250.0,
+		endX:    150.0, //200.0, //I don't think endX and endY are used anymore
+		endY:    50.0,  //100.0,
 	}
 
 	sDe := &scaleData{
-		centerX: 200.0,
-		centerY: 180.0, //250.0,
+		centerX: 85.0,  //200.0,
+		centerY: 125.0, //250.0,
 		endX:    200.0,
 		endY:    100.0,
 	}
@@ -99,6 +101,8 @@ func main() {
 		elBind:     binding.NewString(),
 		azPosBind:  binding.NewString(),
 		elPosBind:  binding.NewString(),
+		azDiffBind: binding.NewString(),
+		elDiffBind: binding.NewString(),
 		gridBind:   binding.NewString(),
 		parkAzBind: binding.NewString(),
 		parkElBind: binding.NewString(),
@@ -111,7 +115,7 @@ func main() {
 		sDe:        sDe,
 	}
 
-    err := app.getMasterData()
+	err := app.getMasterData()
 	if err != nil {
 		log.Printf("System failed to initialize master data because: %v\n", err)
 		log.Printf("Initializing the file in the current directory with default data")
@@ -146,8 +150,9 @@ func main() {
 				continue
 			}
 			if app.port == nil {
+				time.Sleep(time.Duration(500) * time.Millisecond)
 				port, err := serial.Open(usbPort, mode) //   tty.usbmodemF412FA9C9C682", mode)
-                port.SetReadTimeout(time.Duration(2) * time.Second)
+				port.SetReadTimeout(time.Duration(2) * time.Second)
 				if err != nil {
 					log.Printf("failed to open the usb connecttion %s: %v", usbPort, err)
 					continue
@@ -155,7 +160,7 @@ func main() {
 				app.port = port
 				app.initApp()
 				firstTime = true
-                log.Printf("port %v reopened", usbPort) 
+				log.Printf("port %v reopened", usbPort)
 			}
 			time.Sleep(time.Duration(1) * time.Second)
 		}
@@ -165,6 +170,8 @@ func main() {
 	app.elBind.Set(fmt.Sprintf("%5.2f", app.currEl))
 	app.azPosBind.Set(fmt.Sprintf("%5.2f", app.azPosition))
 	app.elPosBind.Set(fmt.Sprintf("%5.2f", app.elPosition))
+	app.azDiffBind.Set(fmt.Sprintf("%5.2f", app.currAz-app.azPosition))
+	app.elDiffBind.Set(fmt.Sprintf("%5.2f", app.currEl-app.elPosition))
 	app.gridBind.Set(fmt.Sprintf("%s", app.grid))
 	app.parkAzBind.Set(fmt.Sprintf("%5.2f", app.parkAz))
 	app.parkElBind.Set(fmt.Sprintf("%5.2f", app.parkEl))
