@@ -485,11 +485,11 @@ func (app *application) reSync() {
 	if err != nil {
 		log.Fatal("resync datta failed in elPosition")
 	}
-    err = app.azDiffBind.Set(fmt.Sprintf("%5.2f", app.currAz - app.azPosition))
+	err = app.azDiffBind.Set(fmt.Sprintf("%5.2f", app.currAz-app.azPosition))
 	if err != nil {
 		log.Fatal("resync datta failed in azDiff")
 	}
-    err = app.elDiffBind.Set(fmt.Sprintf("%5.2f", app.currEl - app.elPosition))
+	err = app.elDiffBind.Set(fmt.Sprintf("%5.2f", app.currEl-app.elPosition))
 	if err != nil {
 		log.Fatal("resync datta failed in elEiff")
 	}

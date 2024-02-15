@@ -59,9 +59,8 @@ var (
 var state string = STATE_OPERATE
 
 const (
-    windowWidth = 430
-    windowHeight  = 515
-
+	windowWidth  = 430
+	windowHeight = 515
 )
 
 func (app *application) screen() {
