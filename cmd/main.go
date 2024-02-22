@@ -19,6 +19,7 @@ const (
 	PARKED        = "parked"
 	IDLE          = "idle"
 	basicMicro    = "03EB"
+    fdi           = "0403"
 )
 
 // a button push is needed to cause state to chage based on the selection.
@@ -131,7 +132,7 @@ func main() {
 	}
 
 	mode := &serial.Mode{
-		BaudRate: 460800,
+		BaudRate: 38400, //460800,
 		Parity:   serial.NoParity,
 		DataBits: 8,
 		StopBits: serial.OneStopBit,
@@ -140,7 +141,7 @@ func main() {
 	go func() {
 		firstTime := true
 		for {
-			usbPort, err := findPort(basicMicro)
+			usbPort, err := findPort(fdi) //basicMicro)
 			if err != nil {
 				if firstTime {
 					log.Printf("port finding error %v", err)
@@ -230,17 +231,17 @@ func (app *application) initApp() {
 		app.saveDishData()
 	}
 
-	var packetSerial uint16 = 0x0003
-	err = app.setStdConfig(packetSerial)
-	if err != nil {
-		log.Printf("packet serial configuration failed %v", err)
-	}
+//	var packetSerial uint16 = 0x0003
+//	err = app.setStdConfig(packetSerial)
+//	if err != nil {
+//		log.Printf("packet serial configuration failed %v", err)
+//	}
 	mode := &roboClaw{cmd: azEncMode, value: revMot | revEnc}
 	err = app.writeCmd(mode)
 	if err != nil {
 		log.Printf("reversing az motor failed %v", err)
 	}
-	azQPID := &pid{q: 2, p: 1, i: 0, d: 0} //defined in the comms.go file
+	azQPID := &pid{q: 8, p: 1, i: 0, d: 0} //defined in the comms.go file
 	err = app.setVelocityPID(azQPID, "az")
 	if err != nil {
 		log.Printf("setting azimuth pid failed %v", err)

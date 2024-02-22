@@ -65,7 +65,7 @@ const (
 	elSlow        = 30.0  //65.0
 	azEndLimit    = 0.21  //degrees of travel needed to stop the motor
 	elEndLimit    = 0.21
-	near          = 0.5    // for the Sub Lunar //1.0 //distance to be considered on target
+	near          = 1.5    // for the Sub Lunar //1.0 //distance to be considered on target
 	revEnc        = 1 << 6 //see pages 73 and 74 of roboclaw user manual
 	revMot        = 1 << 5
 )

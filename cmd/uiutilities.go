@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	EME_TITLE = "EME Dish Controller Version v0.4"
+	EME_TITLE = "EME Dish Controller Version v0.5"
 
 	STATE_OPERATE = "operate"
 	STATE_MANUAL  = "manual"
@@ -73,10 +73,10 @@ const (
 	BUTTON_UPDATE_TARGET = "Update Target Az/El"
 
 	TEXT_ADJ_SIZE      = "All adjustments are by 0.5 degree increments"
-	BUTTON_ADJ_UP      = "Adjust Up"
-	BUTTON_ADJ_DN      = "Adjust Down"
-	BUTTON_ADJ_RIGHT   = "Adjust Right"
-	BUTTON_ADJ_LEFT    = "Adjust Left"
+	BUTTON_ADJ_UP      = "Up"
+	BUTTON_ADJ_DN      = "Dn"
+	BUTTON_ADJ_RIGHT   = "CW"
+	BUTTON_ADJ_LEFT    = "CCW"
 	BUTTON_RECALIBRATE = "Recalibrate"
 
 	TITLE_MANUAL = "Manual"
@@ -164,28 +164,28 @@ func (l *labelWrap) makeLabel() *fyne.Container {
 
 func opColor() color.Color {
 	if state == STATE_OPERATE {
-		return teal
+		return purple //teal
 	}
 	return grey
 }
 
 func manColor() color.Color {
 	if state == STATE_MANUAL {
-		return teal
+		return purple //teal
 	}
 	return grey
 }
 
 func pointColor() color.Color {
 	if state == STATE_POINT {
-		return teal
+		return purple //teal
 	}
 	return grey
 }
 
 func setupColor() color.Color {
 	if state == STATE_SETUP {
-		return teal
+		return purple //teal
 	}
 	return grey
 }
@@ -197,7 +197,7 @@ func calcLetter(l int) (w, h float64) {
 	if l < 100 {
 		return -12., -8.
 	}
-	return -18., -8.
+	return -15, -5 //-18., -8.
 
 }
 
