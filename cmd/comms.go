@@ -14,6 +14,7 @@ var cmdLen map[int]int = map[int]int{
 	moveUp:    5,
 	moveDn:    5,
 	azEncMode: 5,
+	timeOut:   5,
 }
 
 const (
@@ -30,6 +31,7 @@ var cmds map[int]byte = map[int]byte{
 	moveUp:    4,
 	moveDn:    5,
 	azEncMode: 92,
+	timeOut:   14,
 }
 
 var noReadN = errors.New("readN did not read anything")
@@ -112,7 +114,7 @@ func (app *application) writeQuadRegister(c uint32, s string) error {
 	return nil
 }
 
-func (app *application) readQuadRegister(s string) (int32, error) {
+func (app *application) readQuadRegister(s string) (uint32, error) {
 	var r uint32
 	wBuff := make([]byte, 2)
 	rBuff := make([]byte, 7)
@@ -161,7 +163,7 @@ func (app *application) readQuadRegister(s string) (int32, error) {
 	r = r | uint32(rBuff[2])<<8
 	r = r | uint32(rBuff[3])
 
-	return int32(r), nil
+	return r, nil
 }
 
 type pid struct {

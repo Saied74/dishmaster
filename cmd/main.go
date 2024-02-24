@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -19,11 +20,13 @@ const (
 	PARKED        = "parked"
 	IDLE          = "idle"
 	basicMicro    = "03EB"
-    fdi           = "0403"
+	fdi           = "0403"
+	timeout       = 20
 )
 
 // a button push is needed to cause state to chage based on the selection.
 type application struct {
+	mu         sync.Mutex
 	state      string //trackingSun, trackingMoon, parked, idle
 	selection  string //sun, moon, neither (idle)
 	ap         fyne.App
@@ -42,6 +45,7 @@ type application struct {
 	elPosition float64
 	masterPath string
 	dishPath   string
+	faultCnt   int
 	port       serial.Port
 	azBind     binding.String
 	elBind     binding.String
@@ -96,6 +100,7 @@ func main() {
 		currEl:     30.0,
 		azPosition: 100.0,
 		elPosition: 30.0,
+		faultCnt:   0,
 		masterPath: masterPath,
 		dishPath:   dishPath,
 		azBind:     binding.NewString(),
@@ -231,15 +236,21 @@ func (app *application) initApp() {
 		app.saveDishData()
 	}
 
-//	var packetSerial uint16 = 0x0003
-//	err = app.setStdConfig(packetSerial)
-//	if err != nil {
-//		log.Printf("packet serial configuration failed %v", err)
-//	}
+	//	var packetSerial uint16 = 0x0003
+	//	err = app.setStdConfig(packetSerial)
+	//	if err != nil {
+	//		log.Printf("packet serial configuration failed %v", err)
+	//	}
 	mode := &roboClaw{cmd: azEncMode, value: revMot | revEnc}
 	err = app.writeCmd(mode)
 	if err != nil {
 		log.Printf("reversing az motor failed %v", err)
+	}
+
+	tOut := &roboClaw{cmd: timeOut, value: timeout}
+	err = app.writeCmd(tOut)
+	if err != nil {
+		log.Printf("setting timeout to %d did not work because: %v", timeout, err)
 	}
 	azQPID := &pid{q: 8, p: 1, i: 0, d: 0} //defined in the comms.go file
 	err = app.setVelocityPID(azQPID, "az")
@@ -261,4 +272,57 @@ func (app *application) initApp() {
 	if err != nil {
 		log.Printf("Updating El register failed: %v", err)
 	}
+}
+
+// The folliwng 8 functions were created to address the race condition issue
+func (app *application) getPosition() (az, el float64) {
+	app.mu.Lock()
+	az, el = app.azPosition, app.elPosition
+	app.mu.Unlock()
+	return az, el
+}
+
+func (app *application) getCurr() (az, el float64) {
+	app.mu.Lock()
+	az, el = app.currAz, app.currEl
+	app.mu.Unlock()
+	return az, el
+}
+
+func (app *application) writeAzPosition(az float64) {
+	app.mu.Lock()
+	app.azPosition = az
+	app.mu.Unlock()
+}
+
+func (app *application) writeElPosition(el float64) {
+	app.mu.Lock()
+	app.elPosition = el
+	app.mu.Unlock()
+}
+
+func (app *application) writeCurrAz(az float64) {
+	app.mu.Lock()
+	app.currAz = az
+	app.mu.Unlock()
+}
+
+func (app *application) writeCurrEl(el float64) {
+	app.mu.Lock()
+	app.currEl = el
+	app.mu.Unlock()
+}
+
+func (app *application) writeAzElPosition(az, el float64) {
+	app.mu.Lock()
+	app.azPosition = az
+	app.elPosition = el
+	app.mu.Unlock()
+}
+
+func (app *application) writeCurrAzEl(az, el float64) {
+	app.mu.Lock()
+	app.currAz = az
+	app.currEl = el
+	app.mu.Unlock()
 }

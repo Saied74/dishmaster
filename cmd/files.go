@@ -68,15 +68,18 @@ func (app *application) getDishData() error {
 	if err != nil {
 		return fmt.Errorf("Err reading dish file: %v", err)
 	}
+
 	before, _, _ := bytes.Cut(m, []byte{0x00})
 	err = json.Unmarshal(before, j)
 	if err != nil {
 		return fmt.Errorf("Err unmarshaling dish file: %v", err)
 	}
-	app.currAz = j.CurrAz
-	app.currEl = j.CurrEl
-	app.azPosition = j.AzPosition //for debugging ease
-	app.elPosition = j.ElPosition
+	app.writeCurrAzEl(j.CurrAz, j.CurrEl) //race condition issue
+	//app.currAz = j.CurrAz                             //race condition issue
+	//app.currEl = j.CurrEl                             //race condition issue
+	app.writeAzElPosition(j.AzPosition, j.ElPosition) //race condition issue
+	//app.azPosition = j.AzPosition                     //race condition issue
+	//app.elPosition = j.ElPosition                     //race condition issue
 	return nil
 }
 
@@ -108,19 +111,19 @@ func (app *application) saveMasterData() error {
 	if err != nil {
 		return fmt.Errorf("Err wirting master file: %v", err)
 	}
-	fmt.Println(j)
 	return nil
 }
 
 func (app *application) saveDishData() error {
 	m := []byte{}
+	currAz, currEl := app.getCurr()             //race condition issue
+	azPosition, elPosition := app.getPosition() //race condition issue
 	j := &dishData{
-		CurrAz:     app.currAz,
-		CurrEl:     app.currEl,
-		AzPosition: app.azPosition,
-		ElPosition: app.elPosition,
+		CurrAz:     currAz,     //race condition issue
+		CurrEl:     currEl,     //race condition issue
+		AzPosition: azPosition, //race condition issue
+		ElPosition: elPosition, //race condition issue
 	}
-
 	m, err := json.Marshal(j)
 	if err != nil {
 		return fmt.Errorf("Err marshaling dish data: %v", err)
@@ -136,6 +139,5 @@ func (app *application) saveDishData() error {
 	if err != nil {
 		return fmt.Errorf("Err writing dish file: %v", err)
 	}
-	//fmt.Println(j)
 	return nil
 }

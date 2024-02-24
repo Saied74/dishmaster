@@ -10,7 +10,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"image/color"
-//	"log"
+	//	"log"
 	"math"
 	"time"
 )
@@ -85,13 +85,13 @@ func (app *application) screen() {
 func (app *application) setupPage(w fyne.Window) fyne.CanvasObject {
 
 	t := &textWrap{
-		txt:     TITLE_SETUP,
-		txtClr:  white,
-//		txtSize: SIZE_PAGE_TITLE,
-		txtBld:  false,
-		bgClr:   purple,
+		txt:    TITLE_SETUP,
+		txtClr: white,
+		//		txtSize: SIZE_PAGE_TITLE,
+		txtBld: false,
+		bgClr:  purple,
 	}
-//	row0 := t.makeText()
+	//	row0 := t.makeText()
 
 	t = &textWrap{txt: TEXT_CURR_GRID, txtClr: black, txtBld: false, bgClr: white}
 	latLabel := t.makeText()
@@ -224,53 +224,51 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 		txtBld:  false,
 		bgClr:   purple,
 	}
-//	row0 := t.makeText()
+	//	row0 := t.makeText()
 
-    sunMoon := widget.NewSelect([]string{"Sun", "Moon"}, func(value string){
-        app.trackModeSelect(value)
-    })
-    sunMoon.PlaceHolder = "Sun/Moon"
+	sunMoon := widget.NewSelect([]string{"Sun", "Moon"}, func(value string) {
+		app.trackModeSelect(value)
+	})
+	sunMoon.PlaceHolder = "Sun/Moon"
 
-
-//	sunMoon := widget.NewRadioGroup([]string{MOON, SUN}, func(value string) {
-//		app.trackModeSelect(value)
-//	})
+	//	sunMoon := widget.NewRadioGroup([]string{MOON, SUN}, func(value string) {
+	//		app.trackModeSelect(value)
+	//	})
 	sunMoon1 := container.New(layout.NewCenterLayout(), sunMoon)
-//	parkSign, err := fyne.LoadResourceFromPath("./assets/park2.jpg")
-//	if err != nil {
-//		log.Printf("Failed to load park sign: %v", err)
-//	}
-//	park := widget.NewButtonWithIcon(BUTTON_PARK, parkSign, func() {
-//		app.pushedPark()
-//	})
-    	park := widget.NewButton(BUTTON_PARK, func() {
+	//	parkSign, err := fyne.LoadResourceFromPath("./assets/park2.jpg")
+	//	if err != nil {
+	//		log.Printf("Failed to load park sign: %v", err)
+	//	}
+	//	park := widget.NewButtonWithIcon(BUTTON_PARK, parkSign, func() {
+	//		app.pushedPark()
+	//	})
+	park := widget.NewButton(BUTTON_PARK, func() {
 		app.pushedPark()
 	})
 
-//	trackSign, err := fyne.LoadResourceFromPath("./assets/track2.jpg")
-//	if err != nil {
-//		log.Printf("Failed to load track sign: %v", err)
-//	}
-//	track := widget.NewButtonWithIcon(BUTTON_TRACK, trackSign, func() {
-//		app.pushedTrack()
-//	})
-    track := widget.NewButton(BUTTON_TRACK, func() {
+	//	trackSign, err := fyne.LoadResourceFromPath("./assets/track2.jpg")
+	//	if err != nil {
+	//		log.Printf("Failed to load track sign: %v", err)
+	//	}
+	//	track := widget.NewButtonWithIcon(BUTTON_TRACK, trackSign, func() {
+	//		app.pushedTrack()
+	//	})
+	track := widget.NewButton(BUTTON_TRACK, func() {
 		app.pushedTrack()
 	})
 
-//	redCircle, err := fyne.LoadResourceFromPath("./assets/red_circle.png")
-//	if err != nil {
-//		log.Printf("Failed to load red circle: %v", err)
-//	}
-//	stop := widget.NewButtonWithIcon(BUTTON_STOP, redCircle, func() {
-//		app.pushedStop()
-//	})
+	//	redCircle, err := fyne.LoadResourceFromPath("./assets/red_circle.png")
+	//	if err != nil {
+	//		log.Printf("Failed to load red circle: %v", err)
+	//	}
+	//	stop := widget.NewButtonWithIcon(BUTTON_STOP, redCircle, func() {
+	//		app.pushedStop()
+	//	})
 	stop := widget.NewButton(BUTTON_STOP, func() {
 		app.pushedStop()
 	})
 
-
-	row1 := container.New(layout.NewGridLayout(4), sunMoon1, track, stop, park) 
+	row1 := container.New(layout.NewGridLayout(4), sunMoon1, track, stop, park)
 
 	row15 := seperator()
 
@@ -319,32 +317,34 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	elRowLabel := t.makeText() //canvas.NewText(t.txt, t.txtClr)
 	// elRowLabel.TextSize = smallText
 
+	azPos, elPos := app.getPosition() //race condition issue
+	cuAz, cuEl := app.getCurr()       //race condition issue
+
 	l = &labelWrap{
-		txt:    fmt.Sprintf("%5.2f", app.currAz),
+		txt:    fmt.Sprintf("%5.2f", cuAz),
 		txtClr: black,
 		txtBld: false,
 		bgClr:  white,
 	}
 	l.bind = app.azBind
 	currAz := l.makeLabel()
-
-	l.txt = fmt.Sprintf("%5.2f", app.azPosition)
+	l.txt = fmt.Sprintf("%5.2f", azPos) //race condition issue
 	l.bind = app.azPosBind
 	azPosition := l.makeLabel()
 
-	l.txt = fmt.Sprintf("%5.2f", app.currAz-app.azPosition)
+	l.txt = fmt.Sprintf("%5.2f", cuAz-azPos) //race condition issue
 	l.bind = app.azDiffBind
 	azDiff := l.makeLabel()
 
-	l.txt = fmt.Sprintf("%5.2f", app.currEl)
+	l.txt = fmt.Sprintf("%5.2f", cuEl) //race condition issue
 	l.bind = app.elBind
 	currEl := l.makeLabel()
 
-	l.txt = fmt.Sprintf("%5.2f", app.elPosition)
+	l.txt = fmt.Sprintf("%5.2f", elPos) //race condition issue
 	l.bind = app.elPosBind
 	elPosition := l.makeLabel()
 
-	l.txt = fmt.Sprintf("%5.2f", app.currEl-app.elPosition)
+	l.txt = fmt.Sprintf("%5.2f", cuEl-elPos) //race condition issue
 	l.bind = app.elDiffBind
 	elDiff := l.makeLabel()
 
@@ -358,32 +358,34 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	la.StrokeWidth = 2
 	la.Position1 = fyne.Position{float32(app.sDa.centerX), float32(app.sDa.centerY)}
 
-    lb := canvas.NewLine(teal)
-    lb.StrokeWidth = 4
-    lb.Position1 = la.Position1
+	lb := canvas.NewLine(teal)
+	lb.StrokeWidth = 4
+	lb.Position1 = la.Position1
 
 	go func() {
 		for {
-			radThetaA := ((2.0 * math.Pi) * (app.azPosition - 90.0)) / 360.0
-            radThetaB := ((2.0 * math.Pi) * (app.currAz - 90.0)) / 360.0
-			endXa := innerX * math.Cos(radThetaA) + app.sDa.centerX
-			endYa := innerY * math.Sin(radThetaA) + app.sDa.centerY
-            endXb := innerX * math.Cos(radThetaB) + app.sDa.centerX
-            endYb := innerY * math.Sin(radThetaB) + app.sDa.centerY
+			azPos, _ := app.getPosition()                           //race condition issue
+			cuAz, _ := app.getCurr()                                //race condition issue
+			radThetaA := ((2.0 * math.Pi) * (azPos - 90.0)) / 360.0 //race condition issue
+			radThetaB := ((2.0 * math.Pi) * (cuAz - 90.0)) / 360.0  //race condition issue
+			endXa := innerX*math.Cos(radThetaA) + app.sDa.centerX
+			endYa := innerY*math.Sin(radThetaA) + app.sDa.centerY
+			endXb := innerX*math.Cos(radThetaB) + app.sDa.centerX
+			endYb := innerY*math.Sin(radThetaB) + app.sDa.centerY
 			lp2a := fyne.Position{float32(endXa), float32(endYa)}
-            lp2b := fyne.Position{float32(endXb), float32(endYb)}
+			lp2b := fyne.Position{float32(endXb), float32(endYb)}
 			la.Position2 = lp2a
-            lb.Position2 = lp2b
-            la.Refresh()
-            lb.Refresh()
+			lb.Position2 = lp2b
+			la.Refresh()
+			lb.Refresh()
 			//canvas.Refresh(la)
-            //canvas.Refresh(lb)
+			//canvas.Refresh(lb)
 			time.Sleep(time.Duration(500) * time.Millisecond)
 		}
 	}()
-    hashMarksa = append(hashMarksa, lb)
+	hashMarksa = append(hashMarksa, lb)
 	hashMarksa = append(hashMarksa, la)
-    
+
 	ita := container.NewWithoutLayout(hashMarksa...)
 
 	hashMarkse := app.makeScale("el")
@@ -393,29 +395,31 @@ func (app *application) operatePage(w fyne.Window) fyne.CanvasObject {
 	le.StrokeWidth = 2
 	le.Position1 = fyne.Position{float32(app.sDe.centerX), float32(app.sDe.centerY)}
 
-    lf := canvas.NewLine(teal)
-    lf.StrokeWidth = 4
-    lf.Position1 = fyne.Position{float32(app.sDe.centerX), float32(app.sDe.centerY)}
+	lf := canvas.NewLine(teal)
+	lf.StrokeWidth = 4
+	lf.Position1 = fyne.Position{float32(app.sDe.centerX), float32(app.sDe.centerY)}
 
 	go func() {
 		for {
-			radThetaE := ((2.0 * math.Pi) * (360.0 - app.elPosition)) / 360.0
-            radThetaF := ((2.0 * math.Pi) * (360.0 - app.currEl)) / 360.0
+			_, elPos := app.getPosition()                            //race condition issue
+			_, cuEl := app.getCurr()                                 //race condition issue
+			radThetaE := ((2.0 * math.Pi) * (360.0 - elPos)) / 360.0 //race condition issue
+			radThetaF := ((2.0 * math.Pi) * (360.0 - cuEl)) / 360.0  //race condition issue
 			endXe := innerX*math.Cos(radThetaE) + app.sDe.centerX
 			endYe := innerY*math.Sin(radThetaE) + app.sDe.centerY
-            endXf := innerX*math.Cos(radThetaF) + app.sDe.centerX
-            endYf := innerY*math.Sin(radThetaF) + app.sDe.centerY
+			endXf := innerX*math.Cos(radThetaF) + app.sDe.centerX
+			endYf := innerY*math.Sin(radThetaF) + app.sDe.centerY
 			le.Position2 = fyne.Position{float32(endXe), float32(endYe)}
-            lf.Position2 = fyne.Position{float32(endXf), float32(endYf)}
-            le.Refresh()
-            lf.Refresh()
-//			canvas.Refresh(le)
+			lf.Position2 = fyne.Position{float32(endXf), float32(endYf)}
+			le.Refresh()
+			lf.Refresh()
+			//			canvas.Refresh(le)
 			time.Sleep(time.Duration(500) * time.Millisecond)
 		}
 	}()
-    hashMarkse = append(hashMarkse, lf)
+	hashMarkse = append(hashMarkse, lf)
 	hashMarkse = append(hashMarkse, le)
-    
+
 	ite := container.NewWithoutLayout(hashMarkse...)
 
 	row54 := container.New(layout.NewGridLayout(2), ita, ite)
@@ -480,7 +484,7 @@ func (app *application) pointPage(w fyne.Window) fyne.CanvasObject {
 		txtBld:  true,
 		bgClr:   purple,
 	}
-//	row0 := t.makeText()
+	//	row0 := t.makeText()
 
 	t = &textWrap{txt: TEXT_TARGET_AZ, txtClr: black, txtBld: false, bgClr: white}
 	targetAzLabel := t.makeText()
@@ -505,7 +509,7 @@ func (app *application) pointPage(w fyne.Window) fyne.CanvasObject {
 		},
 	}
 	enterTarget := b.makeButton()
-    b.txt = BUTTON_RECALIBRATE
+	b.txt = BUTTON_RECALIBRATE
 	b.callBack = func() {
 		app.recalibrate(targetAz.Text, targetEl.Text)
 	}
@@ -556,27 +560,25 @@ func (app *application) pointPage(w fyne.Window) fyne.CanvasObject {
 	b.callBack = app.adjustLeft
 	adjLeft := b.makeButton()
 
-    //b.txt = BUTTON_STOP
-    //b.callBack = app.pushedStop
-    //stop := b.makeButton()
-    stop := widget.NewButton(BUTTON_STOP, func() {
+	//b.txt = BUTTON_STOP
+	//b.callBack = app.pushedStop
+	//stop := b.makeButton()
+	stop := widget.NewButton(BUTTON_STOP, func() {
 		app.pushedStop()
 	})
 
+	row6a := container.New(layout.NewGridLayout(1), adjUp)
+	row6b := container.New(layout.NewGridLayout(2), adjRight, adjLeft)
+	row6c := container.New(layout.NewGridLayout(1), adjDn)
 
-    row6a := container.New(layout.NewGridLayout(1), adjUp)
-    row6b := container.New(layout.NewGridLayout(2), adjRight, adjLeft)
-    row6c := container.New(layout.NewGridLayout(1), adjDn)
-    
-    row7 := seperator()
-    row8 := container.New(layout.NewGridLayout(1), stop)
+	row7 := seperator()
+	row8 := container.New(layout.NewGridLayout(1), stop)
 
-//	row6 := container.New(layout.NewGridLayout(4), adjRight, adjLeft, adjUp, adjDn)
+	//	row6 := container.New(layout.NewGridLayout(4), adjRight, adjLeft, adjUp, adjDn)
 
+	//	row7 := container.New(layout.NewGridLayout(1), reCalib)
 
-//	row7 := container.New(layout.NewGridLayout(1), reCalib)
-
-//	row75 := seperator()
+	//	row75 := seperator()
 
 	rowN := app.basePage(w)
 	setupGrid := container.NewBorder(nil, rowN, nil, nil, container.New(layout.NewVBoxLayout(),
@@ -721,7 +723,7 @@ func (app *application) basePage(w fyne.Window) fyne.CanvasObject {
 			fmt.Println("Point")
 			pointGrid := app.pointPage(w)
 			w.SetContent(pointGrid)
-            w.Resize(fyne.NewSize(windowWidth, windowHeight)) 
+			w.Resize(fyne.NewSize(windowWidth, windowHeight))
 			w.Show()
 		},
 	}

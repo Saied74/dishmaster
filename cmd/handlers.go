@@ -47,9 +47,10 @@ func (app *application) mooner() {
 				ct.getTime()
 				_, _, _, _, _, _, az, el, _ := moon2(ct.year, ct.month, ct.day, ct.ut, app.lon, app.lat)
 				if checkLimits(az, app.maxAz, app.minAz) && checkLimits(el, app.maxEl, app.minEl) {
-					app.currAz = az
-					app.currEl = el
-					fmt.Println(az, el)
+					app.writeCurrAzEl(az, el) //race condition issue
+					//app.currAz = az                   //race condition issue
+					//app.currEl = el                   //race condition issue
+					//fmt.Println(az, el)
 					app.reSync()
 				} else {
 					app.state = IDLE
@@ -59,8 +60,9 @@ func (app *application) mooner() {
 				ct.getTime()
 				_, _, _, az, el, _, _ := sun(ct.year, ct.month, ct.day, ct.ut, app.lon, app.lat)
 				if checkLimits(az, app.maxAz, app.minAz) && checkLimits(el, app.maxEl, app.minEl) {
-					app.currAz = az
-					app.currEl = el
+					app.writeCurrAzEl(az, el) //race condition issue
+					//app.currAz = az                   //race condition issue
+					//app.currEl = el                   //race condition issue
 					app.reSync()
 				} else {
 					app.state = IDLE
@@ -317,19 +319,23 @@ func (app *application) updateTarget(azimuth, elevation string) {
 		app.handleError(msg)
 		return
 	}
-	app.currAz = az
-	app.currEl = el
+	app.writeCurrAzEl(az, el) //race condition issue
+	//app.currAz = az                       //race condition issue
+	//app.currEl = el                       //race condition issue
 	app.saveDishData()
 	app.reSync()
-
-	fmt.Println("Target Azimuth: ", app.currAz, app.azPosition)
-	fmt.Println("Target Elevattion: ", app.currEl, app.elPosition)
+	azPos, elPos := app.getPosition()               //race condition issue
+	cuAz, cuEl := app.getCurr()                     //race condition issue
+	fmt.Println("Target Azimuth: ", cuAz, azPos)    //race condition issue
+	fmt.Println("Target Elevattion: ", cuEl, elPos) //race condition issue
 }
 
 func (app *application) adjustUp() {
-	tst := app.currEl + moveInc
+	_, currEl := app.getCurr() //race condition issue
+	tst := currEl + moveInc    //race condition issue
 	if tst < app.maxEl && tst < absElMax {
-		app.currEl = tst
+		app.writeCurrEl(tst) //race condition issue
+		//app.currEl = tst                  //race condition issue
 		app.reSync()
 		return
 	}
@@ -337,9 +343,11 @@ func (app *application) adjustUp() {
 }
 
 func (app *application) adjustDn() {
-	tst := app.currEl - moveInc
+	_, currEl := app.getCurr() //race condition issue
+	tst := currEl - moveInc    //race condition issue
 	if tst > app.minEl && tst > absElMin {
-		app.currEl = tst
+		app.writeCurrEl(tst) //race condition issue
+		//app.currEl = tst                      //race condition issue
 		app.reSync()
 		return
 	}
@@ -347,9 +355,11 @@ func (app *application) adjustDn() {
 }
 
 func (app *application) adjustRight() {
-	tst := app.currAz + moveInc
+	currAz, _ := app.getCurr() //race condition issue
+	tst := currAz + moveInc    //race condition issue
 	if tst < app.maxAz && tst < absAzMax {
-		app.currAz = tst
+		app.writeCurrAz(tst) //race condition issue
+		//app.currAz = tst                      //race condition issue
 		app.reSync()
 		return
 	}
@@ -357,9 +367,11 @@ func (app *application) adjustRight() {
 }
 
 func (app *application) adjustLeft() {
-	tst := app.currAz - moveInc
+	currAz, _ := app.getCurr() //race condition issue
+	tst := currAz - moveInc    //race condition issue
 	if tst > app.minAz && tst > absAzMin {
-		app.currAz = tst
+		app.writeCurrAz(tst) //race condition issue
+		//app.currAz = tst                      //race condition issue
 		app.reSync()
 		return
 	}
@@ -388,8 +400,9 @@ func (app *application) pushedTrack() {
 		_, _, _, az, el, _, _ := sun(ct.year, ct.month, ct.day, ct.ut, app.lon, app.lat)
 		testUpdate = checkLimits(az, app.maxAz, app.minAz) && checkLimits(el, app.maxEl, app.minEl)
 		if testUpdate {
-			app.currAz = az
-			app.currEl = el
+			app.writeCurrAzEl(az, el) //race condition issue
+			//app.currAz = az                   //race condition issue
+			//app.currEl = el                   //race condition issue
 			app.reSync()
 		} else {
 			app.state = IDLE
@@ -402,8 +415,9 @@ func (app *application) pushedTrack() {
 		_, _, _, _, _, _, az, el, _ := moon2(ct.year, ct.month, ct.day, ct.ut, app.lon, app.lat)
 		testUpdate = checkLimits(az, app.maxAz, app.minAz) && checkLimits(el, app.maxEl, app.minEl)
 		if testUpdate {
-			app.currAz = az
-			app.currEl = el
+			app.writeCurrAzEl(az, el) //race condition issue
+			//app.currAz = az                   //race condition issue
+			//app.currEl = el                   //race condition issue
 			app.reSync()
 		} else {
 			app.state = IDLE
@@ -417,14 +431,17 @@ func (app *application) pushedTrack() {
 
 func (app *application) pushedPark() {
 	app.state = PARKED
-	app.currAz = app.parkAz
-	app.currEl = app.parkEl
+	app.writeCurrAzEl(app.parkAz, app.parkEl) //race condition issue
+	//app.currAz = app.parkAz                       //race condition issue
+	//app.currEl = app.parkEl                       //race condition issue
 	app.reSync()
 }
 
 func (app *application) pushedStop() {
-	app.currAz = app.azPosition
-	app.currEl = app.elPosition
+	app.writeCurrAz(app.azPosition) //race condition issue
+	//app.currAz = app.azPosition                   //race condition issue
+	app.writeCurrEl(app.elPosition) //race condition issue
+	//app.currEl = app.elPosition                   //race condition issue
 	app.state = IDLE
 	app.reSync()
 }
@@ -470,27 +487,29 @@ func (app *application) handleError(msg string) {
 }
 
 func (app *application) reSync() {
-	err := app.azBind.Set(fmt.Sprintf("%5.2f", app.currAz))
+	currAz, currEl := app.getCurr()
+	err := app.azBind.Set(fmt.Sprintf("%5.2f", currAz))
 	if err != nil {
 		log.Fatal("resync data failed in currAz: ", err)
 	}
-	err = app.elBind.Set(fmt.Sprintf("%5.2f", app.currEl))
+	err = app.elBind.Set(fmt.Sprintf("%5.2f", currEl))
 	if err != nil {
 		log.Fatal("resync data failed in currEl: ", err)
 	}
-	err = app.azPosBind.Set(fmt.Sprintf("%5.2f", app.azPosition))
+	azPosition, elPosition := app.getPosition()               //race condition issue
+	err = app.azPosBind.Set(fmt.Sprintf("%5.2f", azPosition)) //race condition issue
 	if err != nil {
 		log.Fatal("resync datta failed in azPosition")
 	}
-	err = app.elPosBind.Set(fmt.Sprintf("%5.2f", app.elPosition))
+	err = app.elPosBind.Set(fmt.Sprintf("%5.2f", elPosition)) //race condition issue
 	if err != nil {
 		log.Fatal("resync datta failed in elPosition")
 	}
-	err = app.azDiffBind.Set(fmt.Sprintf("%5.2f", app.currAz-app.azPosition))
+	err = app.azDiffBind.Set(fmt.Sprintf("%5.2f", currAz-azPosition)) //race condition issue
 	if err != nil {
 		log.Fatal("resync datta failed in azDiff")
 	}
-	err = app.elDiffBind.Set(fmt.Sprintf("%5.2f", app.currEl-app.elPosition))
+	err = app.elDiffBind.Set(fmt.Sprintf("%5.2f", currEl-elPosition)) //race condition issue
 	if err != nil {
 		log.Fatal("resync datta failed in elEiff")
 	}
@@ -537,6 +556,9 @@ func (app *application) reSync() {
 func (app *application) recalibrate(azimuth, elevation string) {
 	fmt.Println("recalibratte")
 	var msg string
+	//recalibration initializes the RoboClaw to recover from any past errors and setting of
+	//app.fautCnt back to zero
+	app.initApp()
 
 	az, err := strconv.ParseFloat(azimuth, 64)
 	if err != nil {
@@ -603,10 +625,13 @@ func (app *application) recalibrate(azimuth, elevation string) {
 	if err != nil {
 		log.Printf("Updating El register failed: %v", err)
 	}
-	app.azPosition = az
-	app.currAz = az
-	app.elPosition = el
-	app.currEl = el
+	app.writeAzElPosition(az, el) //race condition issue
+	app.writeCurrAzEl(az, el)     //race condition issue
+	//app.azPosition = az                   //race condition issue
+	//app.currAz = az                       //race condition issue
+	//app.elPosition = el                   //race condition issue
+	//app.currEl = el                       //race condition issue
 	app.reSync()
+	app.faultCnt = 0
 
 }

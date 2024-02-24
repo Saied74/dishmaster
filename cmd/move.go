@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	//   "fmt"
+	"fmt"
 	"log"
 	"math"
 	//    "os"
@@ -34,6 +34,7 @@ const (
 	moveBwd
 	moveUp
 	moveDn
+	timeOut
 	azEncMode
 	phaseZero
 	phaseOne
@@ -68,6 +69,7 @@ const (
 	near          = 1.5    // for the Sub Lunar //1.0 //distance to be considered on target
 	revEnc        = 1 << 6 //see pages 73 and 74 of roboclaw user manual
 	revMot        = 1 << 5
+	faultLimit    = 6
 )
 
 type roboClaw struct {
@@ -81,19 +83,26 @@ func (app *application) move() {
 	var err error
 	go func() {
 		for {
+			if app.faultCnt > faultLimit {
+				continue
+			}
 			switch app.state { //Select one of 3 limits, moon, sun or default.
 			case TRACKING_MOON:
 				limit = moonMoveLimit
 			case TRACKING_SUN:
 				limit = sunMoveLimit
 			}
-			err = app.setAzPosition() //Read the quadrature encoder registers and set the position variables
+			err = app.setAzPosition()    //Read the quadrature encoder registers and set the position variables
+			if errors.Is(err, noReadN) { //noReadN is caused by the remote falling behind we just need to wait
+				continue
+			}
 			err = app.setElPosition()
 			if errors.Is(err, noReadN) { //noReadN is caused by the remote falling behind we just need to wait
 				continue
 			}
-			//move when there is a gap between the current and desired position
-			az := math.Abs(app.currAz - app.azPosition)
+			azPosition, _ := app.getPosition() //race condiition issue
+			currAz, _ := app.getCurr()         //race condition issue
+			az := math.Abs(currAz - azPosition)
 			switch {
 			case az > near:
 				azPhase = phaseTwo
@@ -102,7 +111,9 @@ func (app *application) move() {
 			default:
 				azPhase = phaseZero
 			}
-			azD := app.currAz - app.azPosition //+ means move Fwd, - means move Bwd
+			azPosition, _ = app.getPosition() //race condirtion issue
+			currAz, _ = app.getCurr()         //race condition issue
+			azD := currAz - azPosition        //+ means move Fwd, - means move Bwd
 			if azPhase == phaseTwo {
 				if azD >= 0 {
 					err = app.writeCmd(&roboClaw{moveFwd, azFast})
@@ -142,8 +153,9 @@ func (app *application) move() {
 					}
 				}
 			}
-
-			el := math.Abs(app.currEl - app.elPosition)
+			_, elPosition := app.getPosition()  //race condition issue
+			_, currEl := app.getCurr()          //race iissue
+			el := math.Abs(currEl - elPosition) //race condition issue/
 			switch {
 			case el > near:
 				elPhase = phaseTwo
@@ -152,7 +164,9 @@ func (app *application) move() {
 			default:
 				elPhase = phaseZero
 			}
-			elD := app.currEl - app.elPosition // + means move up, - means move down
+			_, elPosition = app.getPosition() //race condition issue
+			_, currEl = app.getCurr()         //race condition issue
+			elD := currEl - elPosition        // + means move up, - means move down
 			if elPhase == phaseTwo {
 				if elD >= 0 {
 					err = app.writeCmd(&roboClaw{moveUp, elFast})
@@ -203,6 +217,7 @@ func (app *application) moveError(err error, reason string) {
 	if app.port == nil {
 		return
 	}
+	app.faultCnt++
 	log.Printf("comm error %s: %v \n", reason, err)
 }
 
@@ -214,7 +229,18 @@ func (app *application) setAzPosition() error {
 		}
 		app.moveError(err, "az quad read")
 	}
-	app.azPosition = float64(azQuad) * azMul
+	//to handle negative numbers (instead of really large positive ones)
+	p := float64(int32(int32(azQuad))) * azMul
+	if p > app.maxAz || p < app.minAz {
+		app.faultCnt = faultLimit + 1
+		app.pushedStop()
+		return fmt.Errorf("read crazy number %5.0f from azimuth quadrature register", p)
+	}
+	//to handle the dish position initialization issue.
+	if err == nil {
+		app.writeAzPosition(p) //race condition issue
+	}
+	//app.azPosition = p                  //race condition issue
 	//	az := float64(azQuad) * azMul
 	//	switch {
 	//	case az >= app.maxAz:
@@ -235,7 +261,18 @@ func (app *application) setElPosition() error {
 		}
 		app.moveError(err, "el quad read")
 	}
-	app.elPosition = float64(elQuad) * elMul
+	//to handle negative numbers (instead of really large positive ones)
+	p := float64(int32(elQuad)) * elMul
+	if p > app.maxEl || p < app.minEl {
+		app.faultCnt = faultLimit + 1
+		app.pushedStop()
+		return fmt.Errorf("read crazy number %5.0f from elevation quadrature register", p)
+	}
+	//to handle the dish position initialization issue
+	if err == nil {
+		app.writeElPosition(p) //race condition issue
+	}
+	//app.elPosition = p            //race condition issue
 	//	el := float64(elQuad) * elMul
 	//	switch {
 	//	case el >= app.maxEl:
