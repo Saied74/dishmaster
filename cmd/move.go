@@ -83,9 +83,9 @@ func (app *application) move() {
 	var err error
 	go func() {
 		for {
-			if app.faultCnt > faultLimit {
-				continue
-			}
+			//if app.faultCnt > faultLimit {
+			//	continue
+			//}
 			switch app.state { //Select one of 3 limits, moon, sun or default.
 			case TRACKING_MOON:
 				limit = moonMoveLimit
@@ -217,7 +217,7 @@ func (app *application) moveError(err error, reason string) {
 	if app.port == nil {
 		return
 	}
-	app.faultCnt++
+	//app.faultCnt++
 	log.Printf("comm error %s: %v \n", reason, err)
 }
 
@@ -232,8 +232,8 @@ func (app *application) setAzPosition() error {
 	//to handle negative numbers (instead of really large positive ones)
 	p := float64(int32(int32(azQuad))) * azMul
 	if p > app.maxAz || p < app.minAz {
-		app.faultCnt = faultLimit + 1
-		app.pushedStop()
+		//app.faultCnt = faultLimit + 1
+		//app.pushedStop()
 		return fmt.Errorf("read crazy number %5.0f from azimuth quadrature register", p)
 	}
 	//to handle the dish position initialization issue.
@@ -264,8 +264,8 @@ func (app *application) setElPosition() error {
 	//to handle negative numbers (instead of really large positive ones)
 	p := float64(int32(elQuad)) * elMul
 	if p > app.maxEl || p < app.minEl {
-		app.faultCnt = faultLimit + 1
-		app.pushedStop()
+		//app.faultCnt = faultLimit + 1
+		//app.pushedStop()
 		return fmt.Errorf("read crazy number %5.0f from elevation quadrature register", p)
 	}
 	//to handle the dish position initialization issue
