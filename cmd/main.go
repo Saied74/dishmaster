@@ -1,7 +1,7 @@
 package main
 
 import (
-    "flag"
+	"flag"
 	"fmt"
 	"log"
 	"path/filepath"
@@ -23,7 +23,7 @@ const (
 	basicMicro    = "03EB"
 	fdi           = "0403"
 	timeout       = 20
-    upLimit       = 3 //how many times to test remote being up
+	upLimit       = 3 //how many times to test remote being up
 )
 
 // a button push is needed to cause state to chage based on the selection.
@@ -76,8 +76,8 @@ func main() {
 	masterPath := filepath.Join(dataPath, "master.json")
 	dishPath := filepath.Join(dataPath, "dish.json")
 
-    vid := flag.String("vid",fdi , "USB Vendor ID")
-    flag.Parse()
+	vid := flag.String("vid", fdi, "USB Vendor ID")
+	flag.Parse()
 
 	sDa := &scaleData{
 		centerX: 125.0, //250.0,
@@ -110,7 +110,7 @@ func main() {
 		azPosition: 100.0,
 		elPosition: 30.0,
 		faultCnt:   0,
-        port:       nil,
+		port:       nil,
 		remFault:   true, //start with the remote fault being true
 		masterPath: masterPath,
 		dishPath:   dishPath,
@@ -158,7 +158,7 @@ func main() {
 		firstTime := true //so we don't have repeat reporting of the same event
 		for {
 			//constantly monitor the port and see if a port is available
-            usbPort, err := findPort(*vid) //basicMicro)
+			usbPort, err := findPort(*vid) //basicMicro)
 			if err != nil {
 				if firstTime {
 					//app.handleError(fmt.Sprintf("port finding error %v", err))
@@ -180,17 +180,17 @@ func main() {
 					continue
 				}
 				app.setPort(port)
-                log.Println("found and set port", usbPort)
+				log.Println("found and set port", usbPort)
 				//app.initApp()  //based on issue 9 discussin, this is too soon
 				firstTime = true //since we have the port and opened it, if it fails, it will be first time again
 				log.Printf("port %s reopened", usbPort)
 			}
 			//once a port is identified and opened, check to see if there is also a remote fault
-            if app.getRemoteFault() || app.getFaultCnt() >= faultLimit {
-                log.Printf("Remote Fault: %v\tFault Count: %d", app.remFault, app.faultCnt)
+			if app.getRemoteFault() || app.getFaultCnt() >= faultLimit {
+				log.Printf("Remote Fault: %v\tFault Count: %d", app.remFault, app.faultCnt)
 				if app.remoteUp() {
-                    log.Printf("Remote Up")
-                    app.initApp()
+					log.Printf("Remote Up")
+					app.initApp()
 					app.setFaultCnt(0)
 					app.setRemoteFault(false)
 				}
@@ -198,9 +198,9 @@ func main() {
 					if !app.remoteUp() {
 						app.setRemoteFault(true)
 					} else {
-                        app.initApp()
+						app.initApp()
 						app.setFaultCnt(0)
-                        app.setRemoteFault(false)
+						app.setRemoteFault(false)
 					}
 				}
 				time.Sleep(time.Duration(1) * time.Second)
@@ -264,7 +264,7 @@ func (app *application) remoteUp() bool {
 		if err == nil {
 			return true
 		}
-        time.Sleep(time.Duration(500) * time.Millisecond)
+		time.Sleep(time.Duration(500) * time.Millisecond)
 	}
 	return false
 }
