@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -237,7 +238,8 @@ func main() {
 	app.screen()
 
 }
-func findPort(vid string) (port string, err error) {
+func findPort(v string) (port string, err error) {
+	v = strings.ToUpper(v)
 	ports, err := enumerator.GetDetailedPortsList()
 	if err != nil {
 		return "", err
@@ -247,7 +249,7 @@ func findPort(vid string) (port string, err error) {
 	}
 	for _, port := range ports {
 		if port.IsUSB {
-			if port.VID == vid {
+			if port.VID == v {
 				return port.Name, nil
 			}
 		}
