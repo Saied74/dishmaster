@@ -51,14 +51,14 @@ func (app *application) writeCmd(rc *roboClaw) error {
 	if app.port == nil {
 		return fmt.Errorf("USB port is nil")
 	}
-	n, err := app.port.Write(wBuff)
+	n, err := app.getPort().Write(wBuff)
 	if err != nil {
 		return fmt.Errorf("failed write to usb port %v", err)
 	}
 	if n != l {
 		return fmt.Errorf("did not write %d bytes, it wrote %d", l, n)
 	}
-	n, err = app.port.Read(rBuff)
+	n, err = app.getPort().Read(rBuff)
 	if err != nil {
 		return fmt.Errorf("failed to read from usb port: %v", err)
 	}
@@ -91,17 +91,17 @@ func (app *application) writeQuadRegister(c uint32, s string) error {
 	crc := crc16(wBuff)
 	wBuff = append(wBuff, byte(crc>>8))
 	wBuff = append(wBuff, byte(crc))
-	if app.port == nil {
+	if app.getPort() == nil {
 		return fmt.Errorf("Port is not open %v", wBuff)
 	}
-	n, err := app.port.Write(wBuff)
+	n, err := app.getPort().Write(wBuff)
 	if err != nil {
 		return fmt.Errorf("failed write to usb port %v", err)
 	}
 	if n != 8 {
 		return fmt.Errorf("did not write 8 bytes, it wrote %d", n)
 	}
-	n, err = app.port.Read(rBuff)
+	n, err = app.getPort().Read(rBuff)
 	if err != nil {
 		return fmt.Errorf("failed to read from usb port: %v", err)
 	}
@@ -127,10 +127,10 @@ func (app *application) readQuadRegister(s string) (uint32, error) {
 	default:
 		return 0, fmt.Errorf("Bad command \"%s\" in writeQuadRegister", s)
 	}
-	if app.port == nil {
+	if app.getPort() == nil {
 		return 0, fmt.Errorf("Port is not open %v", wBuff)
 	}
-	n, err := app.port.Write(wBuff)
+	n, err := app.getPort().Write(wBuff)
 	if err != nil {
 		return 0, fmt.Errorf("failed write to usb port %v", err)
 	}
@@ -138,7 +138,7 @@ func (app *application) readQuadRegister(s string) (uint32, error) {
 		return 0, fmt.Errorf("did not write 2 bytes, it wrote %d", n)
 	}
 	time.Sleep(time.Duration(120) * time.Millisecond)
-	n, err = app.port.Read(rBuff)
+	n, err = app.getPort().Read(rBuff)
 	if err != nil {
 		return 0, fmt.Errorf("failed to read from usb port: %v", err)
 	}
@@ -193,17 +193,17 @@ func (app *application) setVelocityPID(p *pid, s string) error {
 	crc := crc16(wBuff[:18])
 	wBuff[18] = byte(crc >> 8)
 	wBuff[19] = byte(crc)
-	if app.port == nil {
+	if app.getPort() == nil {
 		return fmt.Errorf("Port is not open %v", wBuff)
 	}
-	n, err := app.port.Write(wBuff)
+	n, err := app.getPort().Write(wBuff)
 	if err != nil {
 		return fmt.Errorf("failed write to usb port %v", err)
 	}
 	if n != 20 {
 		return fmt.Errorf("did not write 20 bytes, it wrote %d", n)
 	}
-	n, err = app.port.Read(rBuff)
+	n, err = app.getPort().Read(rBuff)
 	if err != nil {
 		return fmt.Errorf("failed to read from usb port: %v", err)
 	}
@@ -234,17 +234,17 @@ func (app *application) setStdConfig(config uint16) error {
 	crc := crc16(wBuff[:4])
 	wBuff[4] = byte(crc >> 8)
 	wBuff[5] = byte(crc)
-	if app.port == nil {
+	if app.getPort() == nil {
 		return fmt.Errorf("Port is not open %v", wBuff)
 	}
-	n, err := app.port.Write(wBuff)
+	n, err := app.getPort().Write(wBuff)
 	if err != nil {
 		return fmt.Errorf("failed write to usb port %v", err)
 	}
 	if n != 6 {
 		return fmt.Errorf("did not write 6 bytes, it wrote %d", n)
 	}
-	n, err = app.port.Read(rBuff)
+	n, err = app.getPort().Read(rBuff)
 	if err != nil {
 		return fmt.Errorf("failed to read from usb port: %v", err)
 	}

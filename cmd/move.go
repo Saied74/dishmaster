@@ -83,9 +83,9 @@ func (app *application) move() {
 	var err error
 	go func() {
 		for {
-			//if app.faultCnt > faultLimit {
-			//	continue
-			//}
+			if app.getPort() == nil || app.remFault {
+				continue
+			}
 			switch app.state { //Select one of 3 limits, moon, sun or default.
 			case TRACKING_MOON:
 				limit = moonMoveLimit
@@ -217,7 +217,7 @@ func (app *application) moveError(err error, reason string) {
 	if app.port == nil {
 		return
 	}
-	//app.faultCnt++
+	app.setFaultCnt(app.getFaultCnt() + 1)
 	log.Printf("comm error %s: %v \n", reason, err)
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+    "flag"
 	"fmt"
 	"log"
 	"path/filepath"
@@ -22,6 +23,7 @@ const (
 	basicMicro    = "03EB"
 	fdi           = "0403"
 	timeout       = 20
+    upLimit       = 3 //how many times to test remote being up
 )
 
 // a button push is needed to cause state to chage based on the selection.
@@ -45,7 +47,11 @@ type application struct {
 	elPosition float64
 	masterPath string
 	dishPath   string
-	faultCnt   int
+	//counts the number of serial communicatio faults - see issue 9
+	//it is reset by the monitoring thread in the main function
+	faultCnt int
+	//it indicates that the remote is not functioning.  See issue 9
+	remFault   bool
 	port       serial.Port
 	azBind     binding.String
 	elBind     binding.String
@@ -69,6 +75,9 @@ func main() {
 	dataPath := "./"
 	masterPath := filepath.Join(dataPath, "master.json")
 	dishPath := filepath.Join(dataPath, "dish.json")
+
+    vid := flag.String("vid",fdi , "USB Vendor ID")
+    flag.Parse()
 
 	sDa := &scaleData{
 		centerX: 125.0, //250.0,
@@ -101,6 +110,8 @@ func main() {
 		azPosition: 100.0,
 		elPosition: 30.0,
 		faultCnt:   0,
+        port:       nil,
+		remFault:   true, //start with the remote fault being true
 		masterPath: masterPath,
 		dishPath:   dishPath,
 		azBind:     binding.NewString(),
@@ -144,18 +155,23 @@ func main() {
 	}
 
 	go func() {
-		firstTime := true
+		firstTime := true //so we don't have repeat reporting of the same event
 		for {
-			usbPort, err := findPort(fdi) //basicMicro)
+			//constantly monitor the port and see if a port is available
+            usbPort, err := findPort(*vid) //basicMicro)
 			if err != nil {
 				if firstTime {
+					//app.handleError(fmt.Sprintf("port finding error %v", err))
 					log.Printf("port finding error %v", err)
 					firstTime = false
 				}
-				app.port = nil
-				continue
+				app.setPort(nil) //no portis available
+				//app.port = nil
+				continue //keep looking
 			}
-			if app.port == nil {
+			//if there is a port, check to see if a port is needed (app.port not nil)
+			if app.getPort() == nil {
+				//berore trying to open it, wait for slow computers
 				time.Sleep(time.Duration(500) * time.Millisecond)
 				port, err := serial.Open(usbPort, mode) //   tty.usbmodemF412FA9C9C682", mode)
 				port.SetReadTimeout(time.Duration(2) * time.Second)
@@ -163,12 +179,32 @@ func main() {
 					log.Printf("failed to open the usb connecttion %s: %v", usbPort, err)
 					continue
 				}
-				app.port = port
-				app.initApp()
-				firstTime = true
-				log.Printf("port %v reopened", usbPort)
+				app.setPort(port)
+                log.Println("found and set port", usbPort)
+				//app.initApp()  //based on issue 9 discussin, this is too soon
+				firstTime = true //since we have the port and opened it, if it fails, it will be first time again
+				log.Printf("port %s reopened", usbPort)
 			}
-			time.Sleep(time.Duration(1) * time.Second)
+			//once a port is identified and opened, check to see if there is also a remote fault
+            if app.getRemoteFault() || app.getFaultCnt() >= faultLimit {
+                log.Printf("Remote Fault: %v\tFault Count: %d", app.remFault, app.faultCnt)
+				if app.remoteUp() {
+                    log.Printf("Remote Up")
+                    app.initApp()
+					app.setFaultCnt(0)
+					app.setRemoteFault(false)
+				}
+				if app.getFaultCnt() >= faultLimit {
+					if !app.remoteUp() {
+						app.setRemoteFault(true)
+					} else {
+                        app.initApp()
+						app.setFaultCnt(0)
+                        app.setRemoteFault(false)
+					}
+				}
+				time.Sleep(time.Duration(1) * time.Second)
+			}
 		}
 	}()
 
@@ -217,6 +253,20 @@ func findPort(vid string) (port string, err error) {
 		}
 	}
 	return "", fmt.Errorf("right usb port not found")
+}
+
+func (app *application) remoteUp() bool {
+	if app.port == nil {
+		return false
+	}
+	for i := 0; i < upLimit; i++ {
+		_, err := app.readQuadRegister("az")
+		if err == nil {
+			return true
+		}
+        time.Sleep(time.Duration(500) * time.Millisecond)
+	}
+	return false
 }
 
 func (app *application) initApp() {
@@ -324,5 +374,44 @@ func (app *application) writeCurrAzEl(az, el float64) {
 	app.mu.Lock()
 	app.currAz = az
 	app.currEl = el
+	app.mu.Unlock()
+}
+
+func (app *application) setPort(port serial.Port) {
+	app.mu.Lock()
+	app.port = port
+	app.mu.Unlock()
+}
+
+func (app *application) getPort() serial.Port {
+	app.mu.Lock()
+	port := app.port
+	app.mu.Unlock()
+	return port
+}
+
+func (app *application) getFaultCnt() int {
+	app.mu.Lock()
+	faultCnt := app.faultCnt
+	app.mu.Unlock()
+	return faultCnt
+}
+
+func (app *application) setFaultCnt(cnt int) {
+	app.mu.Lock()
+	app.faultCnt = cnt
+	app.mu.Unlock()
+}
+
+func (app *application) getRemoteFault() bool {
+	app.mu.Lock()
+	flt := app.remFault
+	app.mu.Unlock()
+	return flt
+}
+
+func (app *application) setRemoteFault(flt bool) {
+	app.mu.Lock()
+	app.remFault = flt
 	app.mu.Unlock()
 }
